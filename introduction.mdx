@@ -1,71 +1,88 @@
 ---
-title: Introduction
-description: "Welcome to the home of your new documentation"
+title: 'Introduction to Agensight'
+description: 'Trace, debug, and optimize your LLM workflows with developer-first observability.'
 ---
+import { Card, CardGroup } from "@mintlify/components";
 
 <img
   className="block dark:hidden"
-  src="/images/hero-light.png"
-  alt="Hero Light"
+  src="/images/hero-light.png" // You'll need to create/replace this image
+  alt="Agensight Hero Light"
 />
 <img
   className="hidden dark:block"
-  src="/images/hero-dark.png"
-  alt="Hero Dark"
+  src="/images/hero-dark.png"  // You'll need to create/replace this image
+  alt="Agensight Hero Dark"
 />
 
-## Setting up
+## Unlock LLM Observability
 
-The first step to world-class documentation is setting up your editing environments.
+**Agensight is an Observability SDK built for developers working with Large Language Models.** It empowers you to trace every interaction, debug effectively, and optimize your prompts and LLM-powered applications with ease, all within your local development environment.
 
 <CardGroup cols={2}>
   <Card
-    title="Edit Your Docs"
-    icon="pen-to-square"
-    href="https://mintlify.com/docs/quickstart"
+    title="Quickstart Guide"
+    icon="rocket" // Using a generic icon, Mintlify might have specific ones
+    href="./quickstart" // Assuming quickstart.mdx is in the same directory
   >
-    Get your docs set up locally for easy development
+    Get Agensight installed and running your first trace in minutes.
   </Card>
   <Card
-    title="Preview Changes"
-    icon="image"
-    href="https://mintlify.com/docs/development"
+    title="Explore Core Features"
+    icon="stars" // Using a generic icon
+    href="./core-concepts/features-overview" // We'll need to create this page
   >
-    Preview your changes before you push to make sure they're perfect
+    Discover the power of automated tracing, local debugging, and the prompt playground.
   </Card>
 </CardGroup>
 
-## Make it yours
+## Key Capabilities
 
-Update your docs to your brand and add valuable content for the best user conversion.
+Agensight provides a suite of tools designed to give you deep insights into your LLM workflows:
+
+<CardGroup cols={3}>
+  <Card
+    title="Seamless Tracing"
+    icon="diagram-project" // Generic icon
+    href="./core-concepts/tracing" // We'll create this page
+  >
+    Automatically capture structured traces for every LLM call, complete with context and token usage.
+  </Card>
+  <Card
+    title="Local-First Debugging"
+    icon="terminal" // Generic icon
+    href="./core-concepts/local-development" // We'll create this page
+  >
+    Inspect traces, manage prompt versions, and experiment in the local playground, all offline.
+  </Card>
+  <Card
+    title="Flexible Configuration"
+    icon="sliders" // Generic icon
+    href="./core-concepts/configuration" // We'll create this page
+  >
+    Customize project, trace, and span names. Define agents and models easily via JSON.
+  </Card>
+</CardGroup>
+
+## Dive Deeper
+
+Ready to enhance your LLM development experience?
 
 <CardGroup cols={2}>
   <Card
-    title="Customize Style"
-    icon="palette"
-    href="https://mintlify.com/docs/settings/global"
-  >
-    Customize your docs to your company's colors and brands
-  </Card>
-  <Card
-    title="Reference APIs"
+    title="API Reference"
     icon="code"
-    href="https://mintlify.com/docs/api-playground/openapi"
+    href="./api-reference/functions/function-overview" // Link to your API section
   >
-    Automatically generate endpoints from an OpenAPI spec
+    Explore the Agensight SDK functions and classes in detail.
   </Card>
   <Card
-    title="Add Components"
-    icon="screwdriver-wrench"
-    href="https://mintlify.com/docs/content/components/accordions"
+    title="Practical Examples"
+    icon="flask-vial" // Generic icon
+    href="./examples/basic-usage" // Link to your examples
   >
-    Build interactive features and designs to guide your users
-  </Card>
-  <Card
-    title="Get Inspiration"
-    icon="stars"
-    href="https://mintlify.com/customers"
-  >
-    Check out our showcase of our favorite documentation
+    See Agensight in action with practical use-cases and code samples.
   </Card>
 </CardGroup>
+
+For community support or to contribute, visit our [GitHub Repository](https://github.com/PYPE-AI-MAIN/agensight). (This URL is from the readme, please confirm it's the correct one you want to link).

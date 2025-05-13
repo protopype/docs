@@ -28,7 +28,7 @@
             "group": "Examples",
             "pages": [
               "examples/basic-usage",
-              "examples/advanced-feature"
+              "examples/advanced-features"
             ]
           }
         ]
@@ -39,6 +39,7 @@
           {
             "group": "Functions",
             "pages": [
+              "api-reference/introduction",
               "api-reference/functions/function-1",
               "api-reference/functions/function-2"
             ]
