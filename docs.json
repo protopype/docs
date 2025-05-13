@@ -20,7 +20,7 @@
           {
             "group": "Get Started",
             "pages": [
-              "index",
+              "introduction",
               "api-reference/introduction",
               "quickstart"
             ]
@@ -31,12 +31,7 @@
               "examples/basic-usage",
               "examples/advanced-features"
             ]
-          }
-        ]
-      },
-      {
-        "tab": "API Reference",
-        "groups": [
+          },
           {
             "group": "Functions",
             "pages": [
