@@ -1,254 +1,151 @@
 ---
-title: 'Tracing with Agensight'
-description: 'Learn how to use Agensight for tracing and observability in your Python applications.'
+title: 'Agensight Tracing: Init, Trace, and Span'
+description: 'How to initialize Agensight tracing and use the @trace and @span decorators.'
 ---
 
-# Agensight Tracing
+# Agensight Tracing Essentials
 
-The `agensight.tracing` module provides a powerful way to instrument your Python applications for observability. By adding traces and spans, you can gain insights into your code's execution flow, monitor performance, and debug issues more effectively. This system is built on the foundations of OpenTelemetry, a widely adopted open-standard for observability.
+This guide focuses on the core components for instrumenting your Python code with Agensight: initializing the tracer, creating traces, and adding spans.
 
-## Key Concepts
+## Initialization: `setup_tracing`
 
-*   **Trace**: Represents the entire lifecycle of a request or an operation as it moves through your system or within a single process. A trace is a collection of spans.
-*   **Span**: Represents a single unit of work or operation within a trace. Spans can be nested to represent parent-child relationships between operations. For example, an incoming API request might be a trace, and operations like "database query," "external API call," or "data transformation" within that request would be individual spans.
-*   **Exporter**: A component that sends your trace data to a backend system for storage, visualization, and analysis (e.g., console, a local database, Jaeger, Zipkin, OpenTelemetry Collector).
-*   **Attributes**: Key-value pairs attached to traces or spans that provide additional context about the operation (e.g., user ID, HTTP method, function arguments, LLM model name).
+Before creating any traces or spans, you must initialize the Agensight tracing system. This is typically done once when your application starts. The primary function for this is `setup_tracing`.
 
-## Setup and Initialization
-
-Before you can create traces or spans, the Agensight tracing system needs to be initialized. This is typically done once at the beginning of your application's lifecycle.
+*   **Purpose**: Configures the OpenTelemetry TracerProvider and sets up an exporter to determine where trace data is sent.
+*   **Key Parameters**:
+    *   `service_name` (str, optional): The name of your application or service (e.g., "my-api"). Defaults to `"default"`.
+    *   `exporter_type` (str, optional): Specifies the trace destination.
+        *   If `None` (default): Uses the `TRACE_EXPORTER` environment variable, or defaults to `"console"` (prints traces to standard output).
+        *   `"db"`: Stores traces in a local SQLite database (`traces.db`).
+        *   Other values like `"otlp"`, `"zipkin"`, `"jaeger"` can be used for other standard OpenTelemetry backends.
 
 **Relevant File:** `agensight/tracing/setup.py`
 
-### `setup_tracing(service_name="default", exporter_type=None)`
-
-This is the primary function for initializing the tracing system.
-
-*   **`service_name` (str, optional)**: A descriptive name for your application or service (e.g., "user-api", "data-processing-pipeline"). This name helps identify where traces originate. Defaults to `"default"`.
-*   **`exporter_type` (str, optional)**: Determines where the collected trace data will be sent.
-    *   If `None` (default): Agensight checks the `TRACE_EXPORTER` environment variable. If this variable is not set, it defaults to `"console"`, which prints trace information directly to your standard output. This is useful for local development and debugging.
-    *   `"db"`: Traces are stored in a local SQLite database named `traces.db` (created in the directory where your application runs). The schema is managed by `agensight/tracing/db.py`, and the export logic is in `agensight/tracing/exporter_db.py`.
-    *   Other values (e.g., `"otlp"`, `"zipkin"`, `"jaeger"`): Agensight can be configured to use other standard OpenTelemetry exporters. The available exporters are defined in `agensight/tracing/exporters.py`.
-
-**Initialization Steps:**
-
-1.  **Exporter Configuration**: An exporter instance is created based on `exporter_type`.
-2.  **Database Initialization (for "db" exporter)**: If `exporter_type` is `"db"`, the `init_schema()` function from `agensight/tracing/db.py` is called to ensure the necessary tables exist in `traces.db`.
-3.  **TracerProvider Setup**: An OpenTelemetry `TracerProvider` is configured.
-4.  **Span Processors**:
-    *   `BatchSpanProcessor`: Bundles spans together before sending them to the exporter, improving efficiency.
-    *   `TokenPropagator` (from `agensight/tracing/token_propagator.py`): A custom span processor specific to Agensight, likely for handling custom token or context propagation logic.
-5.  **Global Registration**: The configured `TracerProvider` is set globally using `opentelemetry.trace.set_tracer_provider(provider)`.
-
-**Usage Example:**
+**Basic Usage Example:**
 
 ```python
-# main.py or app.py
 from agensight.tracing import setup_tracing
-import os
 
-# Option 1: Configure via environment variable
-# Set TRACE_EXPORTER=db in your environment
-# setup_tracing(service_name="my-awesome-app")
+# Initialize tracing, sending data to the console for "my-application"
+setup_tracing(service_name="my-application", exporter_type="console")
 
-# Option 2: Explicitly set exporter type
-setup_tracing(service_name="my-awesome-app", exporter_type="console")
+# To use the database exporter (ensure TRACE_EXPORTER=db is set in env, or pass explicitly):
+# setup_tracing(service_name="my-data-service", exporter_type="db")
+```
 
-# Option 3: Using the database exporter
-# setup_tracing(service_name="data-pipeline-service", exporter_type="db")
-
-
-```text
 ## Creating Traces with `@trace`
 
-The `@trace` decorator is the primary way to define the boundaries of a significant operation or a request flow. Applying it to a function means that every call to that function will initiate a new trace.
+The `@trace` decorator defines the boundaries of a complete operation or request. Each call to a function decorated with `@trace` initiates a new, independent trace.
 
 **Relevant File:** `agensight/tracing/decorators.py`
 
-### `@trace(name: Optional[str] = None, **default_attributes)`
+### Syntax: `@trace(name: Optional[str] = None, **default_attributes)`
 
-This decorator wraps a function, instrumenting it to create a trace each time it's executed.
+*   **`name` (str, optional)**: Sets a custom name for this trace. If omitted, the decorated function's name (`func.__name__`) is used.
+*   **`**default_attributes` (dict, optional)**: Key-value pairs to be stored as metadata for the trace. This is particularly relevant if you are using the `"db"` exporter, as these attributes are saved in the `metadata` column of the `traces` table.
 
-*   **`name` (str, optional)**: A custom name for the trace. If not provided (`None`), the name of the decorated function (`func.__name__`) will be used.
-*   **`**default_attributes` (dict, optional)**: A set of key-value pairs that will be stored as metadata for the trace. This is particularly relevant if you're using the `"db"` exporter, as these attributes are saved in the `metadata` column of the `traces` table.
-
-**Decorator Behavior:**
-
-1.  **Trace Naming**: Determines the `trace_name`.
-2.  **ID Generation**: Generates a unique `trace_id` (a UUID string).
-3.  **Context Propagation**: Stores `trace_id` and `trace_name` in context variables (`current_trace_id`, `current_trace_name` from `agensight.tracing.context`). This allows nested `@span` decorators to associate themselves with this parent trace.
-4.  **Execution & Timing**: Executes the wrapped function and records its start and end times.
-5.  **Data Persistence (for "db" exporter)**:
-    *   Retrieves the session ID using `get_session_id()` (if sessions are enabled via `is_session_enabled()` from `agensight.tracing.session`).
-    *   Inserts a record into the `traces` table in `traces.db` with the `trace_id`, `trace_name`, `started_at`, `ended_at`, `session_id`, and serialized `default_attributes`.
-6.  **Context Cleanup**: Clears any input/output context that might have been set by inner spans (`trace_input.set(None)`, `trace_output.set(None)`).
+**How it Works:**
+When the decorated function is invoked:
+1. A unique `trace_id` is generated.
+2. The function's execution is timed (start and end).
+3. If using the `"db"` exporter, trace details (ID, name, times, session ID if active, and `default_attributes`) are recorded in the `traces` database table.
+4. Context variables (`current_trace_id`, `current_trace_name`) are set, allowing any `@span` decorators used within this function's call stack to automatically associate with this parent trace.
 
 **Usage Example:**
 
 ```python
-from agensight.tracing import trace, setup_tracing, span # span for later
+from agensight.tracing import trace, setup_tracing
 
-setup_tracing(service_name="user-service", exporter_type="console")
+setup_tracing(service_name="order-processor") # Default exporter: console
 
-@trace(name="process_new_user_signup", department="onboarding")
-def handle_new_user(username: str, email: str):
-    print(f"Starting signup for {username}...")
-    # Simulate some work
-    create_user_record(username, email)
-    send_welcome_email(email)
-    print(f"Signup complete for {username}.")
-    return {"user_id": f"uuid_{username}", "status": "created"}
+@trace(name="process_customer_order", customer_tier="gold")
+def process_order(order_id: str, items: list):
+    print(f"Processing order {order_id} with {len(items)} items.")
+    # ... main order processing logic ...
+    # This logic might call other functions, some of which could be decorated with @span
+    # e.g., check_inventory(items)
+    # e.g., charge_customer(order_id)
+    print(f"Order {order_id} processed successfully.")
+    return {"status": "success", "order_id": order_id}
 
-# Example of a function that might be called internally, creating a span
-@span(name="db_create_user") # This will be part of the 'process_new_user_signup' trace
-def create_user_record(username, email):
-    print(f"Creating DB record for {username}")
-    # import time
-    # time.sleep(0.1) # Simulate DB work
-    pass
+process_order("ORD12345", [{"item_id": "A1", "qty": 2}, {"item_id": "B2", "qty": 1}])
+```
 
-@span(name="email_send_welcome") # Also part of the 'process_new_user_signup' trace
-def send_welcome_email(email_address):
-    print(f"Sending welcome email to {email_address}")
-    # import time
-    # time.sleep(0.05) # Simulate email sending
-    pass
-
-handle_new_user("john.doe", "john.doe@example.com")
-
-
-```text
 ## Creating Spans with `@span`
 
-Spans offer a more granular view of work done *within* a trace. They are used to instrument specific operations or logical blocks of code inside a function that is already part of a trace (i.e., decorated with `@trace` or called by such a function).
+Spans represent individual units of work or specific operations *within* an active trace. Use the `@span` decorator to instrument functions that perform these granular tasks. A `@span`-decorated function should typically be called by a function that is already part of a trace (i.e., decorated with `@trace` or another `@span`).
 
 **Relevant File:** `agensight/tracing/decorators.py`
 
-### `@span(name: Optional[str] = None, metadata: Optional[Dict[str, Any]] = None, input: Optional[Any] = None, output: Optional[Any] = None)`
+### Syntax: `@span(name: Optional[str] = None, metadata: Optional[Dict[str, Any]] = None, input: Optional[Any] = None, output: Optional[Any] = None)`
 
-This decorator wraps a function to create an OpenTelemetry span each time it's called. It **must** be used within the context of an active trace (i.e., a function decorated with `@trace` must be higher up in the call stack).
+*   **`name` (str, optional)**: A custom name for this specific operation/span. If omitted, the decorated function's name is used.
+*   **`metadata` (Dict[str, Any], optional)**: A dictionary of custom key-value attributes to add to this span, providing detailed context.
+*   **`input` (Any, optional)**: Explicitly provide the input data relevant to this span's operation.
+*   **`output` (Any, optional)**: Explicitly provide the output data from this span's operation.
 
-*   **`name` (str, optional)**: A custom name for the span. If `None`, the decorated function's name (`func.__name__`) is used.
-*   **`metadata` (Dict[str, Any], optional)**: A dictionary of custom key-value attributes to attach to this span. These attributes provide rich contextual information.
-*   **`input` (Any, optional)**: Allows you to explicitly specify the input data for this operation. If provided, this will be captured as part of the span's attributes.
-*   **`output` (Any, optional)**: Allows you to explicitly specify the output data from this operation. If provided, this will be captured.
-
-**Decorator Behavior:**
-
-1.  **Tracer Acquisition**: Gets an OpenTelemetry tracer instance (named "default" via `opentelemetry.trace.get_tracer("default")`).
-2.  **Span Naming**: Determines the `span_name`.
-3.  **Attribute Initialization**: Initializes span attributes with a copy of `metadata` (if provided).
-4.  **Trace Linkage**:
-    *   Retrieves `current_trace_id` and `current_trace_name` from the context variables (set by the parent `@trace`).
-    *   Adds these as `trace_id` and `trace.name` attributes to the span, linking it to the parent trace.
-5.  **Session Linkage**: If a session is active (via `is_session_enabled()` from `agensight.tracing.session`), the `session.id` is added as an attribute.
-6.  **Span Lifecycle**:
-    *   Starts a new OpenTelemetry span using `tracer.start_as_current_span(span_name, attributes=attributes)`. This makes the new span the "current" span in the context.
-    *   Executes the wrapped function.
-7.  **Input/Output Capture**:
-    *   **Input**:
-        *   It first checks if `trace_input` (from `agensight.tracing.context`) has been set (perhaps by a nested operation).
-        *   If not, it uses the `input` argument provided to `@span`.
-        *   If that's also not available, it defaults to the function's `*args` or `**kwargs` as a fallback.
-    *   **Output**:
-        *   It uses the `output` argument provided to `@span`.
-        *   If not available, it defaults to the `result` returned by the wrapped function.
-    *   The captured input and output are then processed by `normalize_input_output`. This function attempts to stringify the data safely and structures it into a `{"prompts": [...], "completions": [...]}` format, which is then stored as a JSON string in the `gen_ai.normalized_input_output` span attribute. This suggests a focus on tracing interactions, possibly with LLMs or similar request/response systems.
-8.  **Error Handling**: If the wrapped function raises an exception:
-    *   The span's status is set to `Status(StatusCode.ERROR, str(e))`.
-    *   The (partially) captured input/output data is still recorded.
-    *   The exception is re-raised.
-9.  **LLM Usage Extraction (GenAI specific)**:
-    *   Calls `_extract_usage_from_result(result)` to attempt to find token usage information (e.g., `total_tokens`, `prompt_tokens`, `completion_tokens`) if the function's `result` object has a `.usage` attribute (which could be an object or a dict) or if `result` itself is a dict containing a `usage` key.
-    *   If usage data is found, it's added as specific span attributes (e.g., `llm.usage.total_tokens`, `gen_ai.usage.prompt_tokens`).
-10. **Span End**: The span automatically ends when the `with tracer.start_as_current_span(...)` 
-
+**How it Works:**
+When a `@span`-decorated function is called:
+1. It links to the `current_trace_id` established by its parent `@trace` (or another parent `@span`).
+2. It records its own `span_name`, any provided `metadata`, and its execution time.
+3. It attempts to automatically capture input/output:
+    *   Input: Prefers explicitly set `trace_input` (via `agensight.tracing.context`), then the `input` argument to `@span`, then the function's arguments (`*args`, `**kwargs`).
+    *   Output: Prefers the `output` argument to `@span`, then the function's return value.
+4.  Captured I/O is normalized (especially for AI/LLM interactions) and stored as a `gen_ai.normalized_input_output` attribute on the span.
+5.  It attempts to extract LLM token usage details (e.g., `total_tokens`, `prompt_tokens`) from the function's result if the result has a `usage` attribute or is a dictionary with a "usage" key. These are added as span attributes (e.g., `llm.usage.total_tokens`).
+6.  If an error occurs, the span's status is marked as `ERROR`.
 
 **Usage Example (within a traced function):**
 
 ```python
 from agensight.tracing import trace, span, setup_tracing
 import time
-# from opentelemetry import trace as ot_trace # For getting current span if needed
 
-# Assume setup_tracing has been called as in previous examples
-setup_tracing(service_name="llm-wrapper", exporter_type="console")
+setup_tracing(service_name="order-processor")
 
-# A simulated function that might call an LLM
-def query_llm_service(prompt: str, model_name: str) -> dict:
-    print(f"Querying LLM ({model_name}) with: '{prompt[:30]}...'")
-    time.sleep(0.2) # Simulate network latency
-    # Simulated response with usage data
-    response_text = f"Response from {model_name} for prompt: {prompt}"
-    prompt_tokens = len(prompt.split())
-    completion_tokens = len(response_text.split())
+@span(name="inventory_check_step", metadata={"criticality": "high"})
+def check_inventory(items_to_check: list):
+    print(f"Checking inventory for {len(items_to_check)} types of items...")
+    # Simulate database call or external service
+    time.sleep(0.2)
+    availability = {item.get("item_id"): True for item in items_to_check} # Simplified
+    print("Inventory check complete.")
+    return availability
+
+# Assume this function simulates an LLM call for fraud detection
+def analyze_for_fraud(order_details: dict) -> dict:
+    time.sleep(0.3) # Simulate LLM call
     return {
-        "text": response_text,
-        "usage": {
-            "prompt_tokens": prompt_tokens,
-            "completion_tokens": completion_tokens,
-            "total_tokens": prompt_tokens + completion_tokens
-        },
-        "model_used": model_name
+        "fraud_score": 0.1,
+        "assessment": "low_risk",
+        "usage": {"prompt_tokens": 100, "completion_tokens": 10, "total_tokens": 110}
     }
 
-@trace(name="article_generation_pipeline")
-def generate_article(topic: str):
-    print(f"Generating article for topic: {topic}")
+@span(name="fraud_detection_llm_call")
+def perform_fraud_check(order_id: str, customer_details: dict):
+    print(f"Performing fraud check for order {order_id}...")
+    # Input/output and LLM usage will be automatically captured
+    result = analyze_for_fraud({"order": order_id, "customer": customer_details})
+    print(f"Fraud check result: {result.get('assessment')}")
+    return result
 
-    @span(name="brainstorm_ideas", metadata={"creativity_level": "high"})
-    def brainstorm(current_topic: str):
-        # Explicitly setting input for clarity, though args would also work
-        # span_input = {"topic": current_topic} # Could be passed to @span(input=...)
-        print(f"Brainstorming for: {current_topic}")
-        time.sleep(0.1)
-        return [f"Idea 1 for {current_topic}", f"Idea 2 for {current_topic}"]
-
-    @span(name="draft_section", metadata={"llm_temperature": 0.7})
-    def draft(section_idea: str, llm_model: str):
-        prompt = f"Write a draft for the section: {section_idea}"
-        # Output will be automatically captured from the return value.
-        # Input is automatically captured from args.
-        # LLM usage will be extracted from the return dict.
-        return query_llm_service(prompt, model_name=llm_model)
-
-    ideas = brainstorm(topic)
+@trace(name="process_customer_order", customer_tier="silver")
+def process_order_v2(order_id: str, items: list, customer_info: dict):
+    print(f"V2 Processing order {order_id} for customer {customer_info.get('id')}")
     
-    full_article_parts = []
-    for i, idea in enumerate(ideas):
-        section_result = draft(idea, llm_model="text-davinci-003" if i % 2 == 0 else "gpt-4o-mini")
-        full_article_parts.append(section_result["text"])
-        # Access span attributes if needed, though usually handled by exporter
-        # current_span = ot_trace.get_current_span()
-        # print(f"Draft span attributes: {current_span.attributes}")
+    # This call will create a span under the "process_customer_order" trace
+    inventory_status = check_inventory(items)
+    
+    # Another span under the same trace
+    fraud_assessment = perform_fraud_check(order_id, customer_info)
+    
+    if all(inventory_status.values()) and fraud_assessment.get("fraud_score", 1) < 0.5:
+        print(f"Order {order_id} V2 processed successfully.")
+        return {"status": "success", "order_id": order_id, "fraud_check": fraud_assessment.get("assessment")}
+    else:
+        print(f"Order {order_id} V2 processing failed or held.")
+        return {"status": "failed_or_held", "inventory": inventory_status, "fraud_check": fraud_assessment.get("assessment")}
 
-    return "\\n\\n".join(full_article_parts)
-
-# Run the pipeline
-article_content = generate_article("The Future of AI in Software Development")
-# print(f"\nGenerated Article:\n{article_content}")
-
-
-```text
-## Summary of Core Tracing Files
-
-*   **`agensight/tracing/setup.py`**:
-    *   Contains `setup_tracing` for global tracer initialization.
-    *   Configures exporters (console, database, OTLP, etc.).
-*   **`agensight/tracing/decorators.py`**:
-    *   Defines the user-facing `@trace` decorator for initiating traces.
-    *   Defines the user-facing `@span` decorator for creating detailed spans within traces.
-*   **`agensight/tracing/tracer.py`**:
-    *   Provides utility functions like `get_tracer` (to obtain an OpenTelemetry `Tracer` instance) and `start_span` (a more direct, lower-level way to create spans, potentially used internally by the decorators or for advanced custom instrumentation).
-*   **`agensight/tracing/exporters.py` & `agensight/tracing/exporter_db.py`**:
-    *   `exporters.py`: Defines a factory function `get_exporter` to instantiate different types of OpenTelemetry span exporters.
-    *   `exporter_db.py`: Implements the `DBSpanExporter`, which writes span data to the SQLite `traces.db` database, including logic for serializing attributes and handling trace relationships.
-*   **`agensight/tracing/db.py`**:
-    *   Manages the SQLite database (`traces.db`) schema creation (`init_schema`) and provides a connection utility (`get_db`). It defines tables like `traces` (for top-level trace information) and uses OpenTelemetry's standard span attributes for detailed span data when the `DBSpanExporter` is active.
-*   **`agensight/tracing/context.py`**:
-    *   Uses `contextvars` to manage trace-specific context (like `current_trace_id`, `current_trace_name`, `trace_input`, `trace_output`) across asynchronous tasks and different parts of the code within a single trace.
-*   **`agensight/tracing/session.py`**:
-    *   Provides utilities (`is_session_enabled`, `get_session_id`) to manage and associate traces/spans with a broader "session" concept, if used by the application.
-
-By using `@trace` for high-level operations and `@span` for the constituent parts, you can build a comprehensive and detailed observability layer for your Agensight applications.
-
+customer = {"id": "cust789", "history_score": 5}
+process_order_v2("ORD67890", [{"item_id": "C3", "qty": 1}], customer)
+```
