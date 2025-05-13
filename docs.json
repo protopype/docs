@@ -25,18 +25,17 @@
             ]
           },
           {
-            "group": "Examples",
+            "group": "Documentation",
             "pages": [
-              "examples/basic-usage",
-              "examples/advanced-features"
+              "api-reference/functions/function-1",
+              "api-reference/functions/function-2"
             ]
           },
           {
-            "group": "Functions",
+            "group": "API REFERENCES",
             "pages": [
-              "api-reference/introduction",
-              "api-reference/functions/function-1",
-              "api-reference/functions/function-2"
+              "examples/basic-usage",
+              "examples/advanced-features"
             ]
           }
         ]
