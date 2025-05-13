@@ -20,7 +20,8 @@
           {
             "group": "Get Started",
             "pages": [
-              "introduction",
+              "index",
+              "api-reference/introduction",
               "quickstart"
             ]
           },
