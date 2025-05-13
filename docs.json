@@ -62,15 +62,7 @@
         ]
       }
     ],
-    "global": {
-      "anchors": [
-        {
-          "anchor": "Agensight Home",
-          "href": "https://github.com/your-repo/agensight",
-          "icon": "house"
-        }
-      ]
-    }
+    "global": {}
   },
   "navbar": {
     "links": [
