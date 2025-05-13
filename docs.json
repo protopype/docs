@@ -25,10 +25,9 @@
             ]
           },
           {
-            "group": "Documentation",
+            "group": "Core Concepts",
             "pages": [
-              "api-reference/functions/function-1",
-              "api-reference/functions/function-2"
+              "core-concepts/tracing"
             ]
           },
           {
