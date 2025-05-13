@@ -30,13 +30,6 @@
               "examples/basic-usage",
               "examples/advanced-feature"
             ]
-          },
-          {
-            "group": "Core Concepts",
-            "pages": [
-              "core-concepts/concept-a",
-              "core-concepts/concept-b"
-            ]
           }
         ]
       },
@@ -46,23 +39,13 @@
           {
             "group": "Functions",
             "pages": [
-              "api-reference/functions/function-overview",
               "api-reference/functions/function-1",
               "api-reference/functions/function-2"
-            ]
-          },
-          {
-            "group": "Classes",
-            "pages": [
-              "api-reference/classes/class-overview",
-              "api-reference/classes/class-A",
-              "api-reference/classes/class-B"
             ]
           }
         ]
       }
-    ],
-    "global": {}
+    ]
   },
   "navbar": {
     "links": [
