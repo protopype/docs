@@ -29,13 +29,6 @@
             "pages": [
               "core-concepts/tracing"
             ]
-          },
-          {
-            "group": "API REFERENCES",
-            "pages": [
-              "examples/basic-usage",
-              "examples/advanced-features"
-            ]
           }
         ]
       }
