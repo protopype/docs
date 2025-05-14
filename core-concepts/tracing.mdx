@@ -1,14 +1,15 @@
 ---
-title: 'Agensight Tracing'
-description: 'How to initialize Agensight tracing, define main operations with @trace, and add granular details with @span.'
+title: "Agensight Tracing"
+description: "How to initialize Agensight tracing, define main operations with @trace, and add granular details with @span."
 ---
 
 # Core Concepts
 
 This guide covers the essentials for instrumenting your Python application with Agensight:
-1.  **Initializing** the tracing system using `init`.
-2.  Defining top-level operations or requests as **traces** using the `@trace` decorator.
-3.  Instrumenting specific units of work within a trace as **spans** using the `@span` decorator.
+
+1. **Initializing** the tracing system using `init`.
+2. Defining top-level operations or requests as **traces** using the `@trace` decorator.
+3. Instrumenting specific units of work within a trace as **spans** using the `@span` decorator.
 
 ## Initializing Agensight Tracing
 
@@ -17,12 +18,12 @@ Before any traces or spans can be created, you must initialize the Agensight tra
 **Purpose**:
 The `init` function configures the core tracing mechanism, including setting up how and where trace data is exported.
 
-*   **Key Parameters for `init`**:
-    *   `service_name` (str, optional): A name for your application or service (e.g., "user-api", "data-pipeline"). Defaults to `"default"`. This helps in organizing and filtering traces.
-    *   `exporter_type` (str, optional): Determines the destination for your trace data.
-        *   If `None` (default): Agensight checks the `TRACE_EXPORTER` environment variable. If this variable is not set, it defaults to `"console"` (traces are printed to the standard output).
-        *   `"db"`: Traces are stored in a local SQLite database (default filename: `traces.db`).
-        *   Other values (e.g., `"otlp"`, `"zipkin"`, `"jaeger"`): Can be used if you intend to integrate with other OpenTelemetry-compatible backends. (Requires appropriate OTel exporter packages to be installed).
+- **`Key Parameters for init`**:
+  - `service_name` (str, optional): A name for your application or service (e.g., "user-api", "data-pipeline"). Defaults to `"default"`. This helps in organizing and filtering traces.
+  - `exporter_type` (str, optional): Determines the destination for your trace data.
+    - If `None` (default): Agensight checks the `TRACE_EXPORTER` environment variable. If this variable is not set, it defaults to `"console"` (traces are printed to the standard output).
+    - `"db"`: Traces are stored in a local SQLite database (default filename: `traces.db`).
+    - Other values (e.g., `"otlp"`, `"zipkin"`, `"jaeger"`): Can be used if you intend to integrate with other OpenTelemetry-compatible backends. (Requires appropriate OTel exporter packages to be installed).
 
 **Relevant File (Implementation Detail)**: The underlying setup logic is in `agensight/tracing/setup.py`.
 
@@ -50,15 +51,16 @@ The `@trace` decorator is used to mark the boundaries of a significant, self-con
 
 **Syntax**: `@trace(name: Optional[str] = None, **default_attributes)`
 
-*   **`name` (str, optional)**: Assigns a custom name to the trace. If not provided, the name of the decorated function (`func.__name__`) is used.
-*   **`**default_attributes` (dict, optional)**: A dictionary of key-value pairs that provide metadata for the entire trace. These attributes are especially useful when using the `"db"` exporter, as they get stored with the trace record.
+- **`name (str, optional)`**: Assigns a custom name to the trace. If not provided, the name of the decorated function (`func.__name__`) is used.
+- **`**default_attributes (dict, optional)`**: A dictionary of key-value pairs that provide metadata for the entire trace. These attributes are especially useful when using the `"db"` exporter, as they get stored with the trace record.
 
 **How it Works**:
 When a `@trace`-decorated function is called:
-1.  A unique `trace_id` is generated.
-2.  The function's execution, including start and end times, is recorded.
-3.  If using the `"db"` exporter, details like the trace ID, name, timing, and any `default_attributes` are saved.
-4.  Crucially, it sets up a context so that any `@span`-decorated functions called within the execution of this traced function are automatically associated with this parent trace.
+
+1. A unique `trace_id` is generated.
+2. The function's execution, including start and end times, is recorded.
+3. If using the `"db"` exporter, details like the trace ID, name, timing, and any `default_attributes` are saved.
+4. Crucially, it sets up a context so that any `@span`-decorated functions called within the execution of this traced function are automatically associated with this parent trace.
 
 **Relevant File (Implementation Detail)**: The `@trace` decorator is defined in `agensight/tracing/decorators.py`.
 
@@ -148,25 +150,25 @@ print(f"Pipeline Result 2: {result2}")
 
 ## Adding Granular Details with `@span`
 
-The `@span` decorator is used to instrument specific units of work or operations *within an existing trace*. Think of spans as children of a trace, providing a more detailed breakdown of how time is spent and what happens during the execution of a traced operation. A function decorated with `@span` should generally be called from within a function that is already decorated with `@trace` or another `@span`.
+The `@span` decorator is used to instrument specific units of work or operations _within an existing trace_. Think of spans as children of a trace, providing a more detailed breakdown of how time is spent and what happens during the execution of a traced operation. A function decorated with `@span` should generally be called from within a function that is already decorated with `@trace` or another `@span`.
 
 **Syntax**: `@span(name: Optional[str] = None, metadata: Optional[Dict[str, Any]] = None, input: Optional[Any] = None, output: Optional[Any] = None)`
 
-*   **`name` (str, optional)**: A custom name for this specific span/operation. If omitted, the decorated function's name is used.
-*   **`metadata` (Dict[str, Any], optional)**: A dictionary of custom key-value attributes that provide additional context specific to this span.
-*   **`input` (Any, optional)**: Allows you to explicitly provide the input data relevant to this span's operation. If not provided, Agensight may attempt to infer it.
-*   **`output` (Any, optional)**: Allows you to explicitly provide the output data from this span's operation. If not provided, Agensight may attempt to infer it from the return value.
+- **`name (str, optional)`**: A custom name for this specific span/operation. If omitted, the decorated function's name is used.
+- **`metadata (Dict[str, Any], optional)`**: A dictionary of custom key-value attributes that provide additional context specific to this span.
+- **`input (Any, optional)`**: Allows you to explicitly provide the input data relevant to this span's operation. If not provided, Agensight may attempt to infer it.
+- **`output (Any, optional)`**: Allows you to explicitly provide the output data from this span's operation. If not provided, Agensight may attempt to infer it from the return value.
 
 **How it Works**:
 When a `@span`-decorated function is called:
-1.  It automatically links to the active `trace_id` established by its parent `@trace` (or parent `@span`).
-2.  It records its own `span_name`, any provided `metadata`, and its execution duration.
-3.  It attempts to capture input and output data (either explicitly provided via `input`/`output` parameters, or inferred from function arguments/return values). This is particularly useful for understanding data flow and for AI/LLM interactions where input prompts and output completions are critical.
-4.  Special handling for LLM interactions: If the function's result contains LLM token usage information (e.g., in a `usage` attribute or a "usage" key in a dictionary result), these details (like `total_tokens`, `prompt_tokens`) are extracted and added as attributes to the span.
-5.  If an error occurs during the span's execution, its status is marked appropriately (e.g., `ERROR`).
+
+1. It automatically links to the active `trace_id` established by its parent `@trace` (or parent `@span`).
+2. It records its own `span_name`, any provided `metadata`, and its execution duration.
+3. It attempts to capture input and output data (either explicitly provided via `input`/`output` parameters, or inferred from function arguments/return values). This is particularly useful for understanding data flow and for AI/LLM interactions where input prompts and output completions are critical.
+4. Special handling for LLM interactions: If the function's result contains LLM token usage information (e.g., in a `usage` attribute or a "usage" key in a dictionary result), these details (like `total_tokens`, `prompt_tokens`) are extracted and added as attributes to the span.
+5. If an error occurs during the span's execution, its status is marked appropriately (e.g., `ERROR`).
 
 **Relevant File (Implementation Detail)**: The `@span` decorator is defined in `agensight/tracing/decorators.py`.
-
 
 ### `@span` Examples
 
@@ -292,3 +294,4 @@ print(f"Profile 1: {profile1}\n")
 
 profile2 = build_user_dashboard_profile("unknown_user") # This will trigger an error
 print(f"Profile 2: {profile2}")
+```

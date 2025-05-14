@@ -1,59 +1,102 @@
 ---
 title: "Quickstart"
-description: "This guide will walk you through installing Agensight and capturing your first LLM trace."
+description: "This guide will walk you through installing Agensight and capturing your first LLM trace — both via manual SDK tracing and automatic prompt/tool/agent detection using the MCP server."
 ---
 
-## 1. Prerequisites
+## Step 1: Set Up Agensight MCP Server (Required)
 
-### Quickstart: Your First Trace with Agensight
+The MCP server helps extract agents, tools, and prompts from your codebase — it's required for Agensight to function.
 
-- **Python:** Agensight requires Python version 3.10 or higher. You can check your Python version by running:
-
-  ```bash
-  python --version
-  ```
-
-## 2. Installation
-
-We highly recommend using a virtual environment for your project.
-
-<Tabs>
-  <Tab title="macOS / Linux">
-    ```bash
-    # Create a new virtual environment
-    python3 -m venv .venv
-    # Activate the virtual environment
-    source .venv/bin/activate # On Windows: .venv\Scripts\activate
-    ```
-  </Tab>
-</Tabs>
-
-Once your virtual environment is activated, install Agensight using pip:
+### Installation
 
 ```bash
+# Clone the MCP server repo
+git clone git@github.com:PYPE-AI-MAIN/agensight_mcpserver.git
+cd agensight_mcpserver
+
+# Create a virtual environment
+python -m venv mcp-env
+source mcp-env/bin/activate  # On Windows: mcp-env\Scripts\activate
+
+# Install dependencies
+pip install -r requirements.txt
+```
+
+---
+
+## Step 2: Generate `agensight.config.json`
+
+You have **two options** to create your config file:
+
+### Option A: With Cursor (Automatic)
+
+Add this to `~/.cursor/mcp.json`:
+
+```json
+{
+  "mcpServers": {
+    "agensight-server": {
+      "command": "/path/to/agensight_mcpserver/mcp-env/bin/python",
+      "args": ["/path/to/agensight_mcpserver/server.py"],
+      "description": "Tool to generate agensight config"
+    }
+  }
+}
+```
+
+> Replace `/path/to/agensight_mcpserver` with your actual path.
+
+In Cursor, ask:
+
+```
+Please analyze this codebase using the generateAgensightConfig MCP tool
+```
+
+This will generate a valid `agensight.config.json` file for your project.
+
+### Option B: Without Cursor (Manual)
+
+If you're not using Cursor, you can manually create a `agensight.config.json` file. The format looks like this:
+
+```json
+{
+  "projectName": "my-llm-app",
+  "agents": ["Agent1", "Agent2"],
+  "tools": ["ToolA", "ToolB"],
+  "prompts": ["prompt_id_1", "prompt_id_2"]
+}
+```
+
+## Step 3: Install Agensight SDK and Capture a Trace
+
+We recommend using a virtual environment for your SDK-based app:
+
+```bash
+# Create and activate virtual env
+python3 -m venv .venv
+source .venv/bin/activate  # On Windows: .venv\Scripts\activate
+
+# Install the SDK
 pip install agensight
 ```
 
-## 3. Initialize Your Project & Run a Basic Trace
+---
 
-Let's write a simple Python script to trace an OpenAI API call.
+## Step 4: Run Your First Trace
 
-Create a new Python file (e.g., `my_llm_app.py`) with the following code:
+Create a file `my_llm_app.py`:
 
 ```python
-# my_llm_app.py
 from agensight import init, trace, span
-import openai # Make sure you have the openai package installed: pip install openai
+import openai  # pip install openai
 
-# 1. Initialize Agensight (Optional: provide a project name)
+# 1. Initialize Agensight
 init(name="my-first-llm-project")
 
-@trace("joke_generation_workflow") # Name your overall trace
+@trace("joke_generation_workflow")
 def generate_a_joke():
-    # Use @span() to mark specific operations within the trace
     @span()
     def call_openai_for_joke():
-        # Ensure your OPENAI_API_KEY environment variable is set
         return openai.ChatCompletion.create(
             model="gpt-3.5-turbo",
             messages=[{"role": "user", "content": "Tell me a fun fact about programming"}]
@@ -69,34 +112,31 @@ if __name__ == "__main__":
     generate_a_joke()
 ```
 
-**Before running:**
+Make sure to set your `OPENAI_API_KEY` as an environment variable.
 
-- Ensure the `openai` Python package is installed: `pip install openai`
-- Make sure your `OPENAI_API_KEY` environment variable is set with your OpenAI API key.
-
-Now, run your script:
+Run the app:
 
 ```bash
 python my_llm_app.py
 ```
 
-## 4. View Your Traces
+---
 
-After your script runs, Agensight will have captured the trace information locally. To view the traces in the Agensight dashboard, run the following command in your terminal:
+## Step 5: View the Dashboard
+
+After tracing your first call, open the Agensight dashboard:
 
 ```bash
 agensight view
 ```
 
-This will typically open the Agensight dashboard in your web browser at `http://localhost:5001`. You should see your "my-first-llm-project" and the "joke_generation_workflow" trace with the `call_openai_for_joke` span inside it.
+This opens a browser window at `http://localhost:5001` with full trace visualization.
 
-## What's Next?
+---
 
-Congratulations\! You've successfully installed Agensight and captured your first LLM trace.
+## What’s Next?
 
-Here are some next steps you can take:
-
-- **Explore the Dashboard:** Familiarize yourself with the Agensight UI and how it displays trace data, token counts, and other details.
-- **Integrate with Existing Code:** Learn how to add `@trace` and `@span` decorators to your existing LLM application code.
-- **Configure the Playground:** Check out how to set up and use the [Agensight Prompt Playground](./core-concepts/playground-setup).
-- [**Dive into Core Concepts:**](./core-concepts/features-overview) Understand more about Agensight's features and how to leverage them.
+- **Explore the dashboard:** Token usage, spans, and workflows.
+- **Use decorators in your app:** `@trace()` for workflows, `@span()` for steps.
+- **Add prompt IDs and agent context to config.**
+- [**See Core Concepts**](./core-concepts/features-overview) for a deep dive.
