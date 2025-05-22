@@ -26,11 +26,13 @@ from agensight.eval.test_case import ModelTestCase, ConversationalTestCase
 from agensight.eval.metrics import ConversationCompletenessMetric
 
 convo_test_case = ConversationalTestCase(
-    turns=[ModelTestCase(input="...", actual_output="...")]
+    turns=[
+        ModelTestCase(input="Hello, how can I help you today?", actual_output="I need assistance with my account."),
+        ModelTestCase(input="Sure, I can help with that. Can you please provide your account number?", actual_output="My account number is 123456.")
+    ]
 )
 metric = ConversationCompletenessMetric(threshold=0.5)
 
-# To run metric as a standalone
 metric.measure(convo_test_case)
 print(metric.score, metric.reason)
 ```
