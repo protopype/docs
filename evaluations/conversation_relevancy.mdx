@@ -1,0 +1,45 @@
+---
+title: "ConversationRelevancy"
+---
+
+The ConversationRelevancyMetric is a conversational metric designed to evaluate whether an LLM chatbot consistently generates relevant responses throughout a conversation. It helps ensure that the chatbot maintains context and provides appropriate replies based on the conversation history.
+
+**Required Arguments:**
+
+- turns: A list of ModelTestCase instances representing the conversation turns. Each ModelTestCase requires:
+- input: The user's input to the chatbot.
+- actual_output: The chatbot's response to the user's input.
+
+**Optional Arguments:**
+
+- threshold: A float representing the minimum passing threshold, defaulted to 0.5.
+- model: A string specifying which of OpenAI's GPT models to use, or any custom LLM model of type DeepEvalBaseLLM. Defaulted to 'gpt-4o'.
+- include_reason: A boolean which, when set to True, includes a reason for its evaluation score. Defaulted to True.
+- strict_mode: A boolean which, when set to True, enforces a binary metric score: 1 for perfection, 0 otherwise. It also overrides the current threshold and sets it to 1. Defaulted to False.
+- async_mode: A boolean which, when set to True, enables concurrent execution within the measure() method. Defaulted to True.
+- verbose_mode: A boolean which, when set to True, prints the intermediate steps used to calculate the metric to the console. Defaulted to False.
+- window_size: An integer defining the size of the sliding window of turns used during evaluation. Defaulted to 3.
+
+```python
+from agensight.eval.test_case import ModelTestCase, ConversationalTestCase
+from agensight.eval.metrics import ConversationRelevancyMetric
+
+convo_test_case = ConversationalTestCase(
+    turns=[ModelTestCase(input="...", actual_output="...")]
+)
+metric = ConversationRelevancyMetric(threshold=0.5)
+
+# To run metric as a standalone
+metric.measure(convo_test_case)
+print(metric.score, metric.reason)
+```
+
+**Python**
+
+**As a Standalone:**
+
+You can run the ConversationRelevancyMetric on a single test case as a standalone, one-off execution. This is useful for debugging or building a custom evaluation pipeline, but it does not provide the benefits of testing reports, platform integration, or optimizations offered by the evaluate() function.
+
+**How Is It Calculated?**
+
+The ConversationRelevancyMetric score is calculated by determining the ratio of turns with relevant actual outputs to the total number of turns. It constructs sliding windows of turns for each turn and uses an LLM to assess whether the last turn in each window has an actual output relevant to the input, based on the previous conversational context.

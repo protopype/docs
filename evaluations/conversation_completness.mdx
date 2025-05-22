@@ -1,0 +1,36 @@
+---
+title: "ConversationCompleteness"
+---
+
+The ConversationCompletenessMetric is a conversational metric designed to evaluate whether an LLM chatbot can complete an end-to-end conversation by satisfying user needs throughout the interaction. It serves as a proxy to measure user satisfaction in conversational AI applications.
+
+**Required Arguments:**
+
+- turns: A list of ModelTestCase instances representing the conversation turns. Each ModelTestCase requires:
+- input: The user's input to the chatbot.
+- actual_output: The chatbot's response to the user's input.
+
+**Optional Arguments:**
+
+- threshold: A float representing the minimum passing threshold, defaulted to 0.5.
+- model: A string specifying which of OpenAI's GPT models to use, or any custom LLM model of type DeepEvalBaseLLM. Defaulted to 'gpt-4o'.
+- include_reason: A boolean which, when set to True, includes a reason for its evaluation score. Defaulted to True.
+- strict_mode: A boolean which, when set to True, enforces a binary metric score: 1 for perfection, 0 otherwise. It also overrides the current threshold and sets it to 1. Defaulted to False.
+- async_mode: A boolean which, when set to True, enables concurrent execution within the measure() method. Defaulted to True.
+- verbose_mode: A boolean which, when set to True, prints the intermediate steps used to calculate the metric to the console. Defaulted to False.
+
+**Usage Example:**
+
+```python
+from agensight.eval.test_case import ModelTestCase, ConversationalTestCase
+from agensight.eval.metrics import ConversationCompletenessMetric
+
+convo_test_case = ConversationalTestCase(
+    turns=[ModelTestCase(input="...", actual_output="...")]
+)
+metric = ConversationCompletenessMetric(threshold=0.5)
+
+# To run metric as a standalone
+metric.measure(convo_test_case)
+print(metric.score, metric.reason)
+```
