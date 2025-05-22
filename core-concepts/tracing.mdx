@@ -1,297 +1,146 @@
 ---
-title: "Agensight Tracing"
-description: "How to initialize Agensight tracing, define main operations with @trace, and add granular details with @span."
+title: 'Agensight Tracing'
+description: 'How to initialize Agensight tracing, define main operations with @trace, and add granular details with @span.'
 ---
 
 # Core Concepts
 
 This guide covers the essentials for instrumenting your Python application with Agensight:
 
-1. **Initializing** the tracing system using `init`.
-2. Defining top-level operations or requests as **traces** using the `@trace` decorator.
-3. Instrumenting specific units of work within a trace as **spans** using the `@span` decorator.
+1. _Initializing_ the tracing system using init().
+2. Defining top-level operations or requests as _traces_ using the @trace decorator.
+3. Instrumenting specific units of work within a trace as _spans_ using the @span decorator.
 
 ## Initializing Agensight Tracing
 
-Before any traces or spans can be created, you must initialize the Agensight tracing system. This is typically done once at the beginning of your application's lifecycle. The function for this is `init`.
+Before any traces or spans can be created, you must initialize the Agensight tracing system using init() — typically once at the beginning of your application.
 
-**Purpose**:
-The `init` function configures the core tracing mechanism, including setting up how and where trace data is exported.
+_Purpose_:
+Sets up the tracing backend (local or cloud), trace/session ID handling, and optional auto-instrumentation of LLM providers.
 
-- **`Key Parameters for init`**:
-  - `service_name` (str, optional): A name for your application or service (e.g., "user-api", "data-pipeline"). Defaults to `"default"`. This helps in organizing and filtering traces.
-  - `exporter_type` (str, optional): Determines the destination for your trace data.
-    - If `None` (default): Agensight checks the `TRACE_EXPORTER` environment variable. If this variable is not set, it defaults to `"console"` (traces are printed to the standard output).
-    - `"db"`: Traces are stored in a local SQLite database (default filename: `traces.db`).
-    - Other values (e.g., `"otlp"`, `"zipkin"`, `"jaeger"`): Can be used if you intend to integrate with other OpenTelemetry-compatible backends. (Requires appropriate OTel exporter packages to be installed).
+_Parameters_:
 
-**Relevant File (Implementation Detail)**: The underlying setup logic is in `agensight/tracing/setup.py`.
+- name (str): Name of your app/service for trace attribution.
+- mode (str): One of local, dev, or prod. Determines if data is stored locally (SQLite) or sent to cloud via Lambda.
+- project_id (str): Required for cloud mode to associate records in Supabase.
+- session (str | dict | None): Optional session ID or metadata. If provided, it associates all traces/spans with this session.
+- auto_instrument_llms (bool): If True, Agensight automatically traces OpenAI/Claude calls via patching.
 
-**Usage Example:**
+_Usage Example:_
 
 ```python
-from agensight import init
+import agensight
 
-# Example 1: Basic initialization (traces go to console by default)
-init(service_name="my-awesome-app")
-
-# Example 2: Initialize to use the database exporter
-# Ensure TRACE_EXPORTER=db in your environment, or specify directly:
-# init(service_name="my-data-processor", exporter_type="db")
-
-# Your application code follows...
-# from agensight import trace, span
-# @trace(...)
-# def my_function(): ...
+agensight.init(
+    name="chatbot-with-tools",
+    mode="prod",
+    project_id="abc12345",
+    session="user_123"  # Can be just a session ID
+)
 ```
-
-## Defining Main Operations with `@trace`
-
-The `@trace` decorator is used to mark the boundaries of a significant, self-contained operation or request in your application. Each function call decorated with `@trace` initiates a new, independent trace. This is ideal for entry points like API request handlers, main processing functions in a script, or any high-level task.
-
-**Syntax**: `@trace(name: Optional[str] = None, **default_attributes)`
-
-- **`name (str, optional)`**: Assigns a custom name to the trace. If not provided, the name of the decorated function (`func.__name__`) is used.
-- **`**default_attributes (dict, optional)`**: A dictionary of key-value pairs that provide metadata for the entire trace. These attributes are especially useful when using the `"db"` exporter, as they get stored with the trace record.
-
-**How it Works**:
-When a `@trace`-decorated function is called:
-
-1. A unique `trace_id` is generated.
-2. The function's execution, including start and end times, is recorded.
-3. If using the `"db"` exporter, details like the trace ID, name, timing, and any `default_attributes` are saved.
-4. Crucially, it sets up a context so that any `@span`-decorated functions called within the execution of this traced function are automatically associated with this parent trace.
-
-**Relevant File (Implementation Detail)**: The `@trace` decorator is defined in `agensight/tracing/decorators.py`.
 
 ---
 
-### `@trace` Examples
+## Defining Traces with @trace
 
-#### Simple Example: Basic Task Execution
-
-This example shows `@trace` on a simple function representing a single, self-contained task.
+Use @trace to define a _top-level operation_ (e.g. API handler, main pipeline, or user workflow). This starts a trace and includes session \+ metadata.
 
 ```python
-from agensight import init, trace
-import time
-
-init(service_name="task-runner-service")
-
-@trace(name="execute_report_generation", report_type="daily_summary")
-def generate_report(report_id: str):
-    print(f"Starting report generation for: {report_id}")
-    # Simulate work
-    time.sleep(0.5) 
-    result = f"Report {report_id} content."
-    print(f"Finished report generation for: {report_id}")
-    return {"status": "success", "report_id": report_id, "content_length": len(result)}
-
-# When generate_report is called, a new trace named "execute_report_generation" starts.
-report_data = generate_report("report_123")
-print(report_data)
+@trace(name="multi_agent_chat", session={"id": "xyz123", "name": "multi agent chat", "user_id": "123"})
+def main():
+    ...
 ```
 
-#### Complex Example: Multi-Step Data Pipeline
+- Automatically generates a unique trace_id
+- Associates any child spans
+- Ties to provided session metadata (if any)
 
-This example demonstrates `@trace` on a main pipeline function that orchestrates several steps, some of which might be instrumented with `@span` (as shown in `@span` examples later) or could be other traced functions.
+---
+
+## Instrumenting with @span
+
+Use @span to annotate _specific operations_ like LLM calls, tool invocations, or data steps.
 
 ```python
-from agensight import init, trace, span # span might be used by helpers
-import time
-
-init(service_name="data-pipeline-service", exporter_type="console")
-
-# --- Helper functions (could be in other modules) ---
-def fetch_raw_data(source_system: str) -> dict:
-    print(f"  Fetching data from {source_system}...")
-    time.sleep(0.2)
-    if source_system == "source_b": # Simulate a potential issue
-        return {"data": None, "error": "Connection failed"}
-    return {"data": f"raw_data_from_{source_system}", "items_count": 100}
-
-@span(name="data_cleaning_step") # This span will be part of the 'process_pipeline' trace
-def clean_data(raw_data_package: dict) -> dict:
-    print(f"  Cleaning data...")
-    time.sleep(0.3)
-    # Simulate cleaning
-    cleaned_data = str(raw_data_package.get("data")).replace("raw_", "cleaned_")
-    return {"cleaned_data": cleaned_data, "items_processed": raw_data_package.get("items_count")}
-
-def archive_data(data_to_archive: dict, archive_location: str): # Not explicitly spanned here
-    print(f"  Archiving data to {archive_location}...")
-    time.sleep(0.1)
-    print(f"  Data archived successfully.")
-# --- End Helper functions ---
-
-@trace(name="customer_data_ingestion_pipeline", pipeline_version="2.1")
-def process_pipeline(source: str, archive_target: str):
-    print(f"Starting pipeline for source: {source}")
-    
-    raw_data = fetch_raw_data(source)
-    if raw_data.get("error"):
-        print(f"Pipeline aborted at fetch stage: {raw_data.get('error')}")
-        return {"status": "failed", "stage": "fetch", "reason": raw_data.get("error")}
-        
-    processed_data = clean_data(raw_data) # 'clean_data' is spanned
-    
-    archive_data(processed_data, archive_target)
-    
-    print(f"Pipeline for source {source} completed successfully.")
-    return {"status": "success", "result_summary": f"Processed {processed_data.get('items_processed')} items."}
-
-# Each call to process_pipeline will generate a new trace
-result1 = process_pipeline(source="source_a", archive_target="/mnt/archive/source_a")
-print(f"Pipeline Result 1: {result1}\n")
-
-result2 = process_pipeline(source="source_b", archive_target="/mnt/archive/source_b")
-print(f"Pipeline Result 2: {result2}")
+@span(name="llm")
+def call_llm(messages):
+    return client.chat.completions.create(...)
 ```
 
-## Adding Granular Details with `@span`
+- Captures input, output, execution time
+- Extracts LLM usage if present
+- Handles tool call spans automatically when tool_choice=auto
 
-The `@span` decorator is used to instrument specific units of work or operations _within an existing trace_. Think of spans as children of a trace, providing a more detailed breakdown of how time is spent and what happens during the execution of a traced operation. A function decorated with `@span` should generally be called from within a function that is already decorated with `@trace` or another `@span`.
+---
 
-**Syntax**: `@span(name: Optional[str] = None, metadata: Optional[Dict[str, Any]] = None, input: Optional[Any] = None, output: Optional[Any] = None)`
+## Session Behavior
 
-- **`name (str, optional)`**: A custom name for this specific span/operation. If omitted, the decorated function's name is used.
-- **`metadata (Dict[str, Any], optional)`**: A dictionary of custom key-value attributes that provide additional context specific to this span.
-- **`input (Any, optional)`**: Allows you to explicitly provide the input data relevant to this span's operation. If not provided, Agensight may attempt to infer it.
-- **`output (Any, optional)`**: Allows you to explicitly provide the output data from this span's operation. If not provided, Agensight may attempt to infer it from the return value.
+> ℹ️ _Note on Sessions_:
+>
+> - If both init() and @trace() specify a session, the @trace() value takes precedence for that specific trace.
+> - If you pass only a string (e.g. session="user_123"), it is treated as a session_id.
+> - To improve traceability, you can pass a full dictionary: id, name, user_id.
+>
+> _Example_:
+>
+> ```python
+> @trace(name="do_task", session="user_123")  # Overrides session from init()
+> def do_task():
+>     ...
+> ```
+>
+> Supplying a full dict `{id, name, user_id}` improves tracking and grouping but is optional.
 
-**How it Works**:
-When a `@span`-decorated function is called:
+Before any traces or spans can be created, you must initialize the Agensight tracing system using `init()` — typically once at the beginning of your application.
 
-1. It automatically links to the active `trace_id` established by its parent `@trace` (or parent `@span`).
-2. It records its own `span_name`, any provided `metadata`, and its execution duration.
-3. It attempts to capture input and output data (either explicitly provided via `input`/`output` parameters, or inferred from function arguments/return values). This is particularly useful for understanding data flow and for AI/LLM interactions where input prompts and output completions are critical.
-4. Special handling for LLM interactions: If the function's result contains LLM token usage information (e.g., in a `usage` attribute or a "usage" key in a dictionary result), these details (like `total_tokens`, `prompt_tokens`) are extracted and added as attributes to the span.
-5. If an error occurs during the span's execution, its status is marked appropriately (e.g., `ERROR`).
+---
 
-**Relevant File (Implementation Detail)**: The `@span` decorator is defined in `agensight/tracing/decorators.py`.
-
-### `@span` Examples
-
-#### Simple Example: LLM Call
-
-This is a common use case for `@span` – instrumenting a call to an external service like an LLM.
+## Example: Multi-Agent Chat with Tools
 
 ```python
-from agensight import init, trace, span
-# import openai # For a real LLM call
-import time
-import os
+import agensight
+from agensight.tracing.decorators import trace, span
 
-# init(service_name="llm-app", exporter_type="console")
-# For real OpenAI calls, ensure your API key is set:
-# openai.api_key = os.getenv("OPENAI_API_KEY")
-# client = openai.OpenAI() 
+agensight.init(name="chat-service", mode="prod", project_id="abc12345", session="user_456")
 
-@span(name="fetch_openai_completion", metadata={"model_provider": "openai"})
-def get_llm_response(prompt: str, model_name: str = "gpt-3.5-turbo"):
-    print(f"    Calling LLM ({model_name}) for prompt: '{prompt[:30]}...'")
-    try:
-        # Simulate LLM call
-        time.sleep(0.4)
-        # For a real call:
-        # response = client.chat.completions.create(
-        #     model=model_name,
-        #     messages=[{"role": "user", "content": prompt}]
-        # )
-        # simulated_content = response.choices[0].message.content
-        # simulated_usage = response.usage # OpenAIObject with token counts
-        
-        simulated_content = f"Simulated LLM response to: {prompt}"
-        simulated_usage = {"prompt_tokens": len(prompt)//4, "completion_tokens": len(simulated_content)//4, "total_tokens": (len(prompt) + len(simulated_content))//4}
+@span(name="llm")
+def call_llm(messages):
+    # Simulate an LLM call with tool use
+    return {"content": "Mock response", "tool_used": "get_weather"}
 
-        # Agensight will automatically try to pick up 'usage' from the return if it's a dict or object with 'usage'
-        return {"content": simulated_content, "usage": simulated_usage, "model_used": model_name}
-    except Exception as e:
-        print(f"    LLM call failed: {e}")
-        # Error will be captured by the span
-        raise
+@trace(name="multi_agent_chat", session="user_789")
+def main():
+    plan = call_llm([{"role": "user", "content": "Weather in Paris?"}])
+    summary = call_llm([{"role": "user", "content": f"Summarize: {plan['content']}"}])
+    print("Final Output:", summary["content"])
 
-@trace(name="generate_article_summary")
-def summarize_article_content(article_text: str):
-    print(f"  Generating summary for article (length: {len(article_text)})...")
-    
-    # This call to get_llm_response will create a span under the "generate_article_summary" trace.
-    # Input (prompt) and Output (response dict) will be captured by the span.
-    # LLM token usage will also be captured from the 'usage' key in the returned dictionary.
-    summary_details = get_llm_response(prompt=f"Summarize this article: {article_text}")
-    
-    print(f"  Summary received: '{summary_details.get('content')[:50]}...'")
-    return {"summary": summary_details.get('content'), "tokens_used": summary_details.get("usage").get("total_tokens")}
-
-# Initialize once
-init(service_name="content-processor", exporter_type="console")
-
-long_article = "This is a very long article about Agensight tracing..." * 5
-summary_result = summarize_article_content(long_article)
-print(f"Final Summary Result: {summary_result}")
+main()
 ```
 
-#### Complex Example: Multi-Step User Profile Enhancement
+This simplified example demonstrates how multiple LLM calls, each wrapped with @span, are grouped under a trace using @trace. Session IDs ensure all trace data is linked and queryable in your observability dashboard.
 
-This example shows multiple `@span`-decorated functions being called sequentially within a single trace, where one spanned function might even call another.
+---
 
-```python
-from agensight import init, trace, span
-import time
+## Cloud Export
 
-init(service_name="user-profile-builder", exporter_type="console")
+In prod or dev mode, Agensight automatically sends observability data to your configured cloud setup (e.g. via AWS Lambda and Supabase).
 
-@span(name="fetch_user_base_data", metadata={"source_db": "user_db_main"})
-def fetch_user_from_db(user_id: str) -> dict:
-    print(f"    Querying database for user: {user_id}")
-    time.sleep(0.1)
-    if user_id == "unknown_user":
-        raise ValueError(f"User {user_id} not found in database.")
-    return {"id": user_id, "name": "Alex Query", "email": f"{user_id}@example.com", "status": "active"}
+To enable this, ensure:
 
-@span(name="fetch_user_activity_score", metadata={"service_endpoint": "activity-service/score"})
-def get_activity_score(user_id: str) -> int:
-    print(f"      Fetching activity score for {user_id} from external service...")
-    time.sleep(0.05) # Simulate quick API call
-    return hash(user_id) % 100 # Simulated score
+- You've set mode="prod" or mode="dev" in init()
+- A valid project_id is provided
+- Your backend infrastructure (e.g. Lambda, database) is correctly configured to receive logs
 
-@span(name="enrich_user_with_activity", metadata={"version": "1.1"})
-def enrich_user_profile(user_data: dict) -> dict:
-    user_id = user_data.get("id")
-    print(f"    Enriching profile for user: {user_id}")
-    
-    # This call to get_activity_score creates a nested span
-    activity_score = get_activity_score(user_id) 
-    
-    enriched_profile = user_data.copy()
-    enriched_profile["activity_score"] = activity_score
-    enriched_profile["profile_completeness"] = "75%" if activity_score > 50 else "50%"
-    time.sleep(0.1) # Simulate some processing for enrichment
-    print(f"    Profile for {user_id} enriched.")
-    return enriched_profile
+Agensight will capture and transmit structured data for:
 
-@trace(name="construct_full_user_dashboard_profile", user_segment="premium")
-def build_user_dashboard_profile(user_id: str):
-    print(f"  Building full dashboard profile for user: {user_id}")
-    try:
-        # First span: get base data
-        base_profile = fetch_user_from_db(user_id)
-        
-        # Second span: enrich the base data; this span internally calls another spanned function
-        full_profile = enrich_user_profile(base_profile)
-        
-        print(f"  Dashboard profile for {user_id} constructed successfully.")
-        return {"status": "success", "profile_data": full_profile}
-    except ValueError as ve:
-        print(f"  Failed to build profile for {user_id}: {ve}")
-        # The error from fetch_user_from_db will be captured by its span,
-        # and the trace itself will also reflect the failure.
-        return {"status": "error", "reason": str(ve)}
+- traces: top-level operations
+- spans: fine-grained steps and LLM/tool calls
+- prompts and completions: LLM input/output and token usage
+- tools: invoked tool functions
+- sessions: grouped user journeys or workflows
 
-# Test cases
-profile1 = build_user_dashboard_profile("alex_doe")
-print(f"Profile 1: {profile1}\n")
+All of this data becomes accessible via your observability dashboard for inspection, debugging, or analytics -**traces, spans, prompts, completions, tools, sessions**
 
-profile2 = build_user_dashboard_profile("unknown_user") # This will trigger an error
-print(f"Profile 2: {profile2}")
-```
+---
+
+For more, see the /examples folder or cloud setup guide.
