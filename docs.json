@@ -27,10 +27,8 @@
           {
             "group": "Core Concepts",
             "pages": [
-              "core-concepts/tracing"
-            ],
-            "subgroups":[
-                {
+              "core-concepts/tracing",
+              {
                   "group":"LLM Evaluations",
                   "pages":[
                     "evaluations/geval",
@@ -40,7 +38,7 @@
                     "evaluations/conversation_relevancy",
                     "evaluations/conversation_geval"
                   ]
-                }
+              }
             ]
           }
         ]
