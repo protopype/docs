@@ -30,7 +30,7 @@
               "evaluations/geval",
               "evaluations/task_completion",
               "evaluations/tool_correctness",
-              "evaluations/conversation_completeness",
+              "evaluations/conversation_completness",
               "evaluations/conversation_relevancy",
               "evaluations/conversation_geval"
             ]
