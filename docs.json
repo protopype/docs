@@ -25,20 +25,22 @@
             ]
           },
           {
-            "group":"LLM Evaluations",
-            "pages":[
-              "evaluations/geval",
-              "evaluations/task_completion",
-              "evaluations/tool_correctness",
-              "evaluations/conversation_completness",
-              "evaluations/conversation_relevancy",
-              "evaluations/conversation_geval"
-            ]
-          },
-          {
             "group": "Core Concepts",
             "pages": [
               "core-concepts/tracing"
+            ],
+            "subgroups":[
+                {
+                  "group":"LLM Evaluations",
+                  "pages":[
+                    "evaluations/geval",
+                    "evaluations/task_completion",
+                    "evaluations/tool_correctness",
+                    "evaluations/conversation_completness",
+                    "evaluations/conversation_relevancy",
+                    "evaluations/conversation_geval"
+                  ]
+                }
             ]
           }
         ]
