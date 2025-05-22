@@ -1,30 +1,31 @@
 ---
+
 title: 'Agensight Tracing'
 description: 'How to initialize Agensight tracing, define main operations with @trace, and add granular details with @span.'
----
+----------------------------------------------------------------------------------------------------------------------------
 
 # Core Concepts
 
 This guide covers the essentials for instrumenting your Python application with Agensight:
 
-1. _Initializing_ the tracing system using init().
-2. Defining top-level operations or requests as _traces_ using the @trace decorator.
-3. Instrumenting specific units of work within a trace as _spans_ using the @span decorator.
+1. **Initializing** the tracing system using `init()`.
+2. Defining top-level operations or requests as **traces** using the `@trace` decorator.
+3. Instrumenting specific units of work within a trace as **spans** using the `@span` decorator.
+
 
 ## Initializing Agensight Tracing
 
-Before any traces or spans can be created, you must initialize the Agensight tracing system using init() — typically once at the beginning of your application.
+Before any traces or spans can be created, you must initialize the Agensight tracing system using `init()` — typically once at the beginning of your application.
 
-_Purpose_:
+**Purpose**:
 Sets up the tracing backend (local or cloud), trace/session ID handling, and optional auto-instrumentation of LLM providers.
 
-_Parameters_:
+**Parameters**:
 
-- name (str): Name of your app/service for trace attribution.
-- mode (str): One of local, dev, or prod. Determines if data is stored locally (SQLite) or sent to cloud via Lambda.
-- project_id (str): Required for cloud mode to associate records in Supabase.
-- session (str | dict | None): Optional session ID or metadata. If provided, it associates all traces/spans with this session.
-- auto_instrument_llms (bool): If True, Agensight automatically traces OpenAI/Claude calls via patching.
+* `name` *(str)*: Name of your app/service for trace attribution.
+* `mode` *(str)*: One of `local`, `dev`, or `prod`. Determines if data is stored locally (SQLite) or sent to cloud.
+* `project_id` *(str)*: Required for cloud mode to associate records in Supabase.
+* `session` *(str | dict | None)*: Optional session ID or metadata. If provided, it associates all traces/spans with this session.
 
 _Usage Example:_
 
@@ -41,9 +42,9 @@ agensight.init(
 
 ---
 
-## Defining Traces with @trace
+## Defining Traces with `@trace`
 
-Use @trace to define a _top-level operation_ (e.g. API handler, main pipeline, or user workflow). This starts a trace and includes session \+ metadata.
+Use `@trace` to define a **top-level operation** (e.g. API handler, main pipeline, or user workflow). This starts a trace and includes session + metadata.
 
 ```python
 @trace(name="multi_agent_chat", session={"id": "xyz123", "name": "multi agent chat", "user_id": "123"})
@@ -51,15 +52,15 @@ def main():
     ...
 ```
 
-- Automatically generates a unique trace_id
-- Associates any child spans
-- Ties to provided session metadata (if any)
+* Automatically generates a unique `trace_id`
+* Associates any child spans
+* Ties to provided `session` metadata (if any)
 
 ---
 
-## Instrumenting with @span
+## Instrumenting with `@span`
 
-Use @span to annotate _specific operations_ like LLM calls, tool invocations, or data steps.
+Use `@span` to annotate **specific operations** like LLM calls, tool invocations, or data steps.
 
 ```python
 @span(name="llm")
@@ -67,29 +68,28 @@ def call_llm(messages):
     return client.chat.completions.create(...)
 ```
 
-- Captures input, output, execution time
-- Extracts LLM usage if present
-- Handles tool call spans automatically when tool_choice=auto
+* Captures `input`, `output`, execution time
+* Extracts LLM `usage` if present
+* Handles tool call spans automatically when `tool_choice=auto`
 
 ---
 
 ## Session Behavior
 
-> ℹ️ _Note on Sessions_:
+> ℹ️ **Note on Sessions**:
 >
-> - If both init() and @trace() specify a session, the @trace() value takes precedence for that specific trace.
-> - If you pass only a string (e.g. session="user_123"), it is treated as a session_id.
-> - To improve traceability, you can pass a full dictionary: id, name, user_id.
+> * If both `init()` and `@trace()` specify a `session`, the `@trace()` value takes precedence for that specific trace.
+> * If you pass only a string (e.g. `session="user_123"`), it is treated as a `session_id`.
+> * To improve traceability, you can pass a full dictionary: `{id, name, user_id}`.
 >
-> _Example_:
+> **Example**:
 >
-> ```python
+> ````python
 > @trace(name="do_task", session="user_123")  # Overrides session from init()
 > def do_task():
 >     ...
-> ```
->
-> Supplying a full dict `{id, name, user_id}` improves tracking and grouping but is optional.
+> ```. Supplying a full dict `{id, name, user_id}` improves tracking and grouping but is optional.
+> ````
 
 Before any traces or spans can be created, you must initialize the Agensight tracing system using `init()` — typically once at the beginning of your application.
 
@@ -117,30 +117,31 @@ def main():
 main()
 ```
 
-This simplified example demonstrates how multiple LLM calls, each wrapped with @span, are grouped under a trace using @trace. Session IDs ensure all trace data is linked and queryable in your observability dashboard.
+This simplified example demonstrates how multiple LLM calls, each wrapped with `@span`, are grouped under a trace using `@trace`. Session IDs ensure all trace data is linked and queryable in your observability dashboard.
 
 ---
 
 ## Cloud Export
 
-In prod or dev mode, Agensight automatically sends observability data to your configured cloud setup (e.g. via AWS Lambda and Supabase).
+In `prod` or `dev` mode, Agensight automatically sends observability data to your configured cloud setup (e.g. via AWS Lambda and Supabase).
 
 To enable this, ensure:
 
-- You've set mode="prod" or mode="dev" in init()
-- A valid project_id is provided
-- Your backend infrastructure (e.g. Lambda, database) is correctly configured to receive logs
+* You’ve set `mode="prod"` or `mode="dev"` in `init()`
+* A valid `project_id` is provided
+* Your backend infrastructure (e.g. Lambda, database) is correctly configured to receive logs
 
 Agensight will capture and transmit structured data for:
 
-- traces: top-level operations
-- spans: fine-grained steps and LLM/tool calls
-- prompts and completions: LLM input/output and token usage
-- tools: invoked tool functions
-- sessions: grouped user journeys or workflows
+* `traces`: top-level operations
+* `spans`: fine-grained steps and LLM/tool calls
+* `prompts` and `completions`: LLM input/output and token usage
+* `tools`: invoked tool functions
+* `sessions`: grouped user journeys or workflows
 
-All of this data becomes accessible via your observability dashboard for inspection, debugging, or analytics -**traces, spans, prompts, completions, tools, sessions**
+All of this data becomes accessible via your observability dashboard for inspection, debugging, or analytics.- `traces`, `spans`, `prompts`, `completions`, `tools`, `sessions`
 
 ---
 
-For more, see the /examples folder or cloud setup guide.
+For more, see the `/examples` folder or cloud setup guide.
+
