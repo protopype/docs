@@ -32,7 +32,7 @@
               "evaluations/tool_correctness",
               "evaluations/conversation_completeness",
               "evaluations/conversation_relevancy",
-              "evalauations/conversation_geval"
+              "evaluations/conversation_geval"
             ]
           },
           {
