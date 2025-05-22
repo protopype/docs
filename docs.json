@@ -27,7 +27,7 @@
           {
             "group": "Concepts",
             "pages": [
-              "concepts/tracing",
+              "core-concepts/tracing",
               {
                   "group":"LLM Evaluations",
                   "pages":[
