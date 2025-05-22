@@ -27,12 +27,12 @@
           {
             "group":"LLM Evaluations",
             "pages":[
-              "evaluation/geval",
-              "evaluation/task_completion",
-              "evaluation/tool_correctness",
-              "evaluation/conversation_completeness",
-              "evaluation/conversation_relevancy",
-              "evalauation/conversation_g_eval"
+              "evaluations/geval",
+              "evaluations/task_completion",
+              "evaluations/tool_correctness",
+              "evaluations/conversation_completeness",
+              "evaluations/conversation_relevancy",
+              "evalauations/conversation_geval"
             ]
           },
           {
