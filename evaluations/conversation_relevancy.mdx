@@ -1,5 +1,5 @@
 ---
-title: "ConversationRelevancy"
+title: "Conversation Relevancy"
 ---
 
 The ConversationRelevancyMetric is a conversational metric designed to evaluate whether an LLM chatbot consistently generates relevant responses throughout a conversation. It helps ensure that the chatbot maintains context and provides appropriate replies based on the conversation history.
@@ -33,8 +33,6 @@ metric = ConversationRelevancyMetric(threshold=0.5)
 metric.measure(convo_test_case)
 print(metric.score, metric.reason)
 ```
-
-**Python**
 
 **As a Standalone:**
 
