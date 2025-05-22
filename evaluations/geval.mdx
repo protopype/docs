@@ -1,0 +1,71 @@
+---
+title: "Geval"
+---
+
+G-Eval is a versatile evaluation framework that leverages LLMs (Large Language Models) as judges to assess outputs based on custom criteria. It uses a chain-of-thoughts (CoT) approach to evaluate outputs with human-like accuracy, making it suitable for a wide range of use cases.
+
+#### **Required Arguments**
+
+To use the GEvalEvaluator, you need to provide the following arguments:
+
+- **name**: A descriptive name for the metric.
+- **criteria**: A description outlining the specific evaluation aspects for each test case.
+- **threshold**: The minimum score required for a passing evaluation.
+
+#### **Optional Arguments**
+
+- **evaluation_steps**: A list of strings outlining the exact steps the LLM should take for evaluation. If not provided, G-Eval will generate steps based on the criteria.
+- **rubric**: A list of rubrics to confine the range of the final metric score.
+- **model**: The specific model to use for evaluation, defaulting to 'gpt-4o'.
+- **strict_mode**: Enforces a binary metric score: 1 for perfection, 0 otherwise.
+- **async_mode**: Enables concurrent execution within the measure() method.
+- **verbose_mode**: Prints intermediate steps used to calculate the metric.
+
+#### **Usage**
+
+Here's how you can use the GEvalEvaluator in your evaluation system:
+
+```
+from agensight.eval.metrics import GEvalEvaluator
+from agensight.eval.test_case import ModelTestCase
+
+# Define the metric
+correctness_metric = GEvalEvaluator(
+    name="Code Correctness",
+    criteria="Evaluate whether the generated code correctly implements the specified requirements.",
+    threshold=0.8
+)
+
+# Create a test case
+test_case = ModelTestCase(
+    input="Write a function to add two numbers.",
+    actual_output="def add(a, b): return a + b",
+    expected_output="A function that correctly adds two numbers."
+)
+
+# Run the evaluation
+correctness_metric.measure(test_case)
+print(correctness_metric.score, correctness_metric.reason)
+```
+
+#### **Evaluation Steps**
+
+If you want more control over the evaluation process, you can provide evaluation_steps:
+
+```python
+correctness_metric = GEvalEvaluator(
+    name="Code Correctness",
+    evaluation_steps=[
+        "Check whether the code correctly adds two numbers.",
+        "Ensure the function handles edge cases like negative numbers.",
+        "Verify that the function is well-documented."
+    ],
+    threshold=0.8
+)
+```
+
+#### **~~Best~~ Practices**
+
+- **Define Clear Criteria**: Ensure your criteria are specific and measurable.
+- **Use Evaluation Steps**: For more reliable results, provide detailed evaluation steps.
+- **Leverage Rubrics**: Use rubrics to standardize scoring and provide clear feedback.
