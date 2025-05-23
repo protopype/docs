@@ -4,13 +4,13 @@ title: "Conversation Completeness"
 
 The ConversationCompletenessMetric is a conversational metric designed to evaluate whether an LLM chatbot can complete an end-to-end conversation by satisfying user needs throughout the interaction. It serves as a proxy to measure user satisfaction in conversational AI applications.
 
-**Required Arguments:**
+### **Required Arguments:**
 
 - turns: A list of ModelTestCase instances representing the conversation turns. Each ModelTestCase requires:
 - input: The user's input to the chatbot.
 - actual_output: The chatbot's response to the user's input.
 
-**Optional Arguments:**
+### **Optional Arguments:**
 
 - threshold: A float representing the minimum passing threshold, defaulted to 0.5.
 - model: A string specifying which of OpenAI's GPT models to use, or any custom LLM model of type DeepEvalBaseLLM. Defaulted to 'gpt-4o'.
@@ -19,7 +19,7 @@ The ConversationCompletenessMetric is a conversational metric designed to ev
 - async_mode: A boolean which, when set to True, enables concurrent execution within the measure() method. Defaulted to True.
 - verbose_mode: A boolean which, when set to True, prints the intermediate steps used to calculate the metric to the console. Defaulted to False.
 
-**Usage Example:**
+### **Usage Example:**
 
 ```python
 from agensight.eval.test_case import ModelTestCase, ConversationalTestCase

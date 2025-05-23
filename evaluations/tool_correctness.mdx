@@ -4,9 +4,7 @@ title: "Tool Correctness "
 
 The ToolCorrectnessMetric is designed to evaluate the accuracy of an AI model's tool usage. It assesses whether the tools called by the model match the expected tools, considering factors like input parameters and output. This metric is crucial for ensuring that models use the correct tools to achieve desired outcomes.
 
-## 
-
-## **Required Arguments**
+### **Required Arguments:**
 
 To use the ToolCorrectnessMetric, you need to provide the following arguments when creating a ModelTestCase:
 
@@ -15,7 +13,7 @@ To use the ToolCorrectnessMetric, you need to provide the following argument
 - **tools_called**: The tools or actions the model used to accomplish the task.
 - **expected_tools**: The tools that are expected to be used by the model.
 
-## **Optional Parameters**
+### **Optional Parameters:**
 
 - **threshold**: A float representing the minimum passing threshold, defaulted to 0.5.
 - **evaluation_params**: A list of ToolCallParams indicating the strictness of the correctness criteria. Options include ToolCallParams.INPUT_PARAMETERS and ToolCallParams.OUTPUT.
@@ -25,7 +23,7 @@ To use the ToolCorrectnessMetric, you need to provide the following argument
 - **should_consider_ordering**: Considers the order in which tools were called. Defaulted to False.
 - **should_exact_match**: Requires the tools_called and expected_tools to be exactly the same. Defaulted to False.
 
-## **Usage**
+### **Usage Example:**
 
 Here's how you can use the ToolCorrectnessMetric in your evaluation system:
 
