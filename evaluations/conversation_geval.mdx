@@ -4,17 +4,17 @@ title: "Conversational GEval"
 
 The ConversationalGEval metric is designed to evaluate AI assistants during technical support conversations. It ensures that the assistant maintains a professional tone and provides clear, constructive responses.
 
-### **Required Arguments:**
+### **Required Arguments**
 
 - name: The name of the metric.
 - criteria: A description outlining the specific evaluation aspects for each test case.
 - evaluation_params: A list of type ModelTestCaseParams. Include only the parameters that are relevant for evaluation.
 
-### **Optional Arguments:**
+### **Optional Arguments**
 
 - evaluation_steps: A list of strings outlining the exact steps the LLM should take for evaluation. You can only provide either evaluation_steps OR criteria, and not both.
 
-### **Usage Example:**
+### **Usage Example**
 
 ```python
 from agensight.eval.test_case import ModelTestCase, ModelTestCaseParams, ConversationalTestCase

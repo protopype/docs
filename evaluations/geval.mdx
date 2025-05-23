@@ -4,7 +4,7 @@ title: "GEval"
 
 G-Eval is a versatile evaluation framework that leverages LLMs (Large Language Models) as judges to assess outputs based on custom criteria. It uses a chain-of-thoughts (CoT) approach to evaluate outputs with human-like accuracy, making it suitable for a wide range of use cases.
 
-### **Required Arguments:**
+### **Required Arguments**
 
 To use the GEvalEvaluator, you need to provide the following arguments:
 
@@ -12,7 +12,7 @@ To use the GEvalEvaluator, you need to provide the following arguments:
 - **criteria**: A description outlining the specific evaluation aspects for each test case.
 - **threshold**: The minimum score required for a passing evaluation.
 
-### **Optional Arguments:**
+### **Optional Arguments**
 
 - **evaluation_steps**: A list of strings outlining the exact steps the LLM should take for evaluation. If not provided, G-Eval will generate steps based on the criteria.
 - **rubric**: A list of rubrics to confine the range of the final metric score.
@@ -21,7 +21,7 @@ To use the GEvalEvaluator, you need to provide the following arguments:
 - **async_mode**: Enables concurrent execution within the measure() method.
 - **verbose_mode**: Prints intermediate steps used to calculate the metric.
 
-### **Usage Example:**
+### **Usage Example**
 
 Here's how you can use the GEvalEvaluator in your evaluation system:
 
