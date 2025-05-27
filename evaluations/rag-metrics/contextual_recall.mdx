@@ -1,7 +1,6 @@
 ---
 title: "Contextual Recall"
-description: "The ContextualRecallMetric is a reference-based RAG evaluation metric designed to measure how completely your retrieval context covers the information needed to generate the ideal answer. It uses LLM-as-a-judge to assess whether statements in the expected_output are attributable to the retrieved context.
-This metric is especially useful for evaluating the completeness of a retriever in your RAG pipeline."
+description: "The ContextualRecallMetric is a reference-based RAG evaluation metric designed to measure how completely your retrieval context covers the information needed to generate the ideal answer. It uses LLM-as-a-judge to assess whether statements in the expected_output are attributable to the retrieved context. This metric is especially useful for evaluating the completeness of a retriever in your RAG pipeline."
 ---
 
 ### Required Arguments
@@ -62,7 +61,7 @@ print(metric.reason)  # e.g. "All expected information is covered in the context
 - For each statement, an LLM determines whether it can be attributed to **any node** in the `retrieval_context`.
 - The **contextual recall score** is calculated as:
 
-Contextual Recall=Number of Attributable StatementsTotal Statements in Expected Output\\text{Contextual Recall} = \\frac{\\text{Number of Attributable Statements}}{\\text{Total Statements in Expected Output}}Contextual Recall=Total Statements in Expected OutputNumber of Attributable Statements​
+$\text{Contextual Recall} = \frac{\text{Number of Attributable Statements}}{\text{Total Statements in Expected Output}}$
 
 This emphasizes **information coverage**, ensuring your retriever surfaces everything necessary for a correct and complete answer.
 
