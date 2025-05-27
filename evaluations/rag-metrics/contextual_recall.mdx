@@ -1,5 +1,74 @@
 ---
-title: 'New file'
-description: 'Description of your new file.'
+title: "Contextual Recall"
+description: "The ContextualRecallMetric is a reference-based RAG evaluation metric designed to measure how completely your retrieval context covers the information needed to generate the ideal answer. It uses LLM-as-a-judge to assess whether statements in the expected_output are attributable to the retrieved context.
+This metric is especially useful for evaluating the completeness of a retriever in your RAG pipeline."
 ---
 
+### Required Arguments
+
+Each test case must be a `ModelTestCase` instance with the following fields:
+
+- `input`: The user's query.
+- `actual_output`: The LLM-generated response (not used in the score computation, but required).
+- `expected_output`: The ideal response used to extract ground-truth statements.
+- `retrieval_context`: A list of strings representing retrieved context chunks.
+
+### Optional Arguments
+
+| Argument              | Type                       | Description                                                                          | Default                     |
+| :-------------------- | :------------------------- | :----------------------------------------------------------------------------------- | :-------------------------- |
+| `threshold`           | `float`                    | Minimum score to be considered a "pass".                                             | `0.5`                       |
+| `model`               | `str`                      | LLM to use for evaluation (e.g., `'gpt-4o'`, or a custom DeepEval-compatible model). | `'gpt-4o'`                  |
+| `include_reason`      | `bool`                     | If `True`, includes explanation for the evaluation score.                            | `True`                      |
+| `strict_mode`         | `bool`                     | Binary scoring mode — `1` for full match, `0` otherwise.                             | `False`                     |
+| `async_mode`          | `bool`                     | Enables concurrent scoring for faster evaluations.                                   | `True`                      |
+| `verbose_mode`        | `bool`                     | If `True`, logs detailed steps to the console.                                       | `False`                     |
+| `evaluation_template` | `ContextualRecallTemplate` | Optional custom prompt template class.                                               | _Default internal template_ |
+
+### Usage Example
+
+```python
+from agensight.eval.test_case import ModelTestCase
+from agensight.eval.metrics import ContextualRecallMetric
+
+# Example: Product Description
+test_case = ModelTestCase(
+    input="What are the display size and weight of this laptop?",
+    actual_output="The laptop has a 15.6-inch display and weighs 2.5kg.",
+    expected_output="This laptop features a 15.6-inch Full HD display and weighs 2.5 kilograms.",
+    retrieval_context=[
+        "Display: 15.6-inch Full HD (1920x1080) IPS panel",
+        "Weight: 2.5kg",
+        "Battery life: Up to 8 hours"
+    ]
+)
+
+# Initialize the metric
+metric = ContextualRecallMetric(
+    threshold=0.7,
+    model="gpt-4o",
+    include_reason=True
+)
+
+# Run evaluation
+metric.measure(test_case)
+print(metric.score)   # e.g. 1.0
+print(metric.reason)  # e.g. "All expected information is covered in the context."
+```
+
+### How It Works
+
+- The metric uses the **expected_output** to extract statements.
+- For each statement, an LLM determines whether it can be attributed to **any node** in the `retrieval_context`.
+- The **contextual recall score** is calculated as:
+
+Contextual Recall=Number of Attributable StatementsTotal Statements in Expected Output\\text{Contextual Recall} = \\frac{\\text{Number of Attributable Statements}}{\\text{Total Statements in Expected Output}}Contextual Recall=Total Statements in Expected OutputNumber of Attributable Statements​
+
+This emphasizes **information coverage**, ensuring your retriever surfaces everything necessary for a correct and complete answer.
+
+### Use Cases
+
+Ideal when you want to:
+
+- Ensure critical facts from your knowledge base are retrieved.
+- Improve the **completeness** of your RAG retriever, especially in complex or multi-fact queries.

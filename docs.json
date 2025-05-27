@@ -34,9 +34,14 @@
                     "evaluations/geval",
                     "evaluations/task_completion",
                     "evaluations/tool_correctness",
-                    "evaluations/conversation_completness",
-                    "evaluations/conversation_relevancy",
-                    "evaluations/conversation_geval",
+                    {
+                      "group":"Conversational Metrics",
+                      "pages":[
+                        "evaluations/conversational-metrics/conversation_completness",
+                        "evaluations/conversational-metrics/conversation_relevancy",
+                        "evaluations/conversational-metrics/conversation_geval"
+                      ]
+                    },
                     {
                         "group":"RAG Metrics",
                         "pages":[
@@ -57,13 +62,13 @@
     "links": [
       {
         "label": "Report Issue",
-        "href": "https://github.com/your-repo/agensight/issues"
+        "href": "https://github.com/pype-ai/agensight/issues"
       }
     ]
   },
   "footer": {
     "socials": {
-      "github": "https://github.com/your-repo/agensight"
+      "github": "https://github.com/pype-ai/agensight"
     }
   }
 }

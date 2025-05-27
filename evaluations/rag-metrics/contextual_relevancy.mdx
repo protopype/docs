@@ -1,5 +1,74 @@
 ---
-title: 'New file'
-description: 'Description of your new file.'
+title: "Contextual Relevancy"
+description: "The ContextualRelevancyMetric is a referenceless RAG evaluation metric that assesses how relevant the retrieved information is in response to a given user input. It uses LLM-as-a-judge to score the retrieval_context based on its topical alignment with the original query, regardless of the actual or expected output.
+This metric is best used to evaluate the quality of your retriever in surfacing only the most relevant context, ensuring retrievals are concise and focused."
 ---
 
+### Required Arguments
+
+Each test case must be a `ModelTestCase` instance with the following fields:
+
+- `input`: The user's query.
+- `actual_output`: The generated response (used for formatting or logging; not used in score computation).
+- `retrieval_context`: A list of strings representing the context chunks retrieved from your knowledge base.
+
+### Optional Arguments
+
+| Argument              | Type                          | Description                                                                    | Default            |
+| :-------------------- | :---------------------------- | :----------------------------------------------------------------------------- | :----------------- |
+| `threshold`           | `float`                       | Minimum passing score.                                                         | `0.5`              |
+| `model`               | `str`                         | Name of LLM to use for scoring (e.g., `'gpt-4o'` or custom `DeepEvalBaseLLM`). | `'gpt-4o'`         |
+| `include_reason`      | `bool`                        | If `True`, includes a human-readable explanation for the score.                | `True`             |
+| `strict_mode`         | `bool`                        | Enforces a binary score: `1` for full relevance, `0` otherwise.                | `False`            |
+| `async_mode`          | `bool`                        | Enables parallel processing during scoring.                                    | `True`             |
+| `verbose_mode`        | `bool`                        | If `True`, logs detailed scoring steps to the console.                         | `False`            |
+| `evaluation_template` | `ContextualRelevancyTemplate` | Override prompt logic for LLM judge.                                           | _Internal default_ |
+
+### Usage Example
+
+```python
+from agensight.eval.test_case import ModelTestCase
+from agensight.eval.metrics import ContextualRelevancyMetric
+
+# Example: Return policy relevance
+test_case = ModelTestCase(
+    input="What is your return policy?",
+    actual_output="You can return items within 30 days if unused.",
+    retrieval_context=[
+        "Return Policy: Items must be returned within 30 days of purchase",
+        "Condition: Products must be unused and in original packaging",
+        "Requirements: Original receipt must be presented",
+        "Shipping Policy: Free shipping on orders over $50"
+    ]
+)
+
+# Initialize the metric
+metric = ContextualRelevancyMetric(
+    threshold=0.7,
+    model="gpt-4o",
+    include_reason=True
+)
+
+# Evaluate
+metric.measure(test_case)
+print(metric.score)   # e.g. 0.75
+print(metric.reason)  # e.g. "Most statements are relevant except for shipping info."
+```
+
+### How It Works
+
+- Extract **statements** from the `retrieval_context` using the selected LLM.
+- Classify each statement as either **relevant** or **not relevant** to the `input`.
+- Compute the **Contextual Relevancy score** as:
+
+$Contextual Relevancy=Number of Relevant Statements / Total Statements in Context  ​$
+
+This focuses on **precision of retrieval**, rewarding concise and input-aligned context chunks.
+
+### Use Cases
+
+Use ContextualRelevancyMetric when you want to:
+
+- Optimize **retriever precision** by penalizing irrelevant or off-topic context.
+- Measure **retrieval drift** when irrelevant content is included in context.
+- Improve user satisfaction by keeping retrieved context short and focused.
