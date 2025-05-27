@@ -37,9 +37,9 @@
                     {
                       "group":"Conversational Metrics",
                       "pages":[
-                        "evaluations/conversational-metrics/conversation_completness",
-                        "evaluations/conversational-metrics/conversation_relevancy",
-                        "evaluations/conversational-metrics/conversation_geval"
+                        "evaluations/conversation/conversation_completness",
+                        "evaluations/conversation/conversation_relevancy",
+                        "evaluations/conversation/conversation_geval"
                       ]
                     },
                     {
