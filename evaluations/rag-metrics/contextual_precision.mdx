@@ -1,5 +1,61 @@
 ---
-title: 'New file'
-description: 'Description of your new file.'
+title: "Contextual Precision"
+description: "The ContextualPrecisionMetric is a reference-based RAG metric designed to evaluate the ranking quality of retrieved context nodes in a Retrieval-Augmented Generation (RAG) system. It uses an LLM-as-a-judge approach to assess whether relevant context chunks are ranked higher than irrelevant ones, ensuring better grounding and reducing hallucination in the final LLM output."
 ---
 
+### Required Arguments
+
+Each test case should be a `ModelTestCase` instance with the following fields:
+
+- `input`: The original user query.
+- `actual_output`: The LLM-generated response based on retrieved context.
+- `expected_output`: The ideal response based on the context.
+- `retrieval_context`: A list of strings representing the retrieved context chunks used by the LLM.
+
+### Optional Arguments
+
+| Argument              | Type                          | Description                                                           | Default                     |
+| :-------------------- | :---------------------------- | :-------------------------------------------------------------------- | :-------------------------- |
+| `threshold`           | `float`                       | Minimum score to be considered a "pass".                              | `0.5`                       |
+| `model`               | `str`                         | The LLM to use for evaluation (e.g., `'gpt-4o'`, or a custom LLM).    | `'gpt-4o'`                  |
+| `include_reason`      | `bool`                        | If `True`, includes the reasoning behind the metric score.            | `True`                      |
+| `strict_mode`         | `bool`                        | Enforces a binary score (1 for perfect relevance order, 0 otherwise). | `False`                     |
+| `async_mode`          | `bool`                        | Enables concurrent processing for faster evaluation.                  | `True`                      |
+| `verbose_mode`        | `bool`                        | Logs intermediate steps to the console.                               | `False`                     |
+| `evaluation_template` | `ContextualPrecisionTemplate` | Optional custom prompt template class for model evaluation.           | _Default internal template_ |
+
+### Usage Example
+
+```python
+
+from agensight.eval.test_case import ModelTestCase
+from agensight.eval.metrics import ContextualPrecisionMetric
+
+# Example: Refund policy case
+test_case = ModelTestCase(
+    input="What if these shoes don't fit?",
+    actual_output="We offer a 30-day full refund at no extra cost.",
+    expected_output="You are eligible for a 30 day full refund at no extra cost.",
+    retrieval_context=["All customers are eligible for a 30 day full refund at no extra cost."]
+)
+
+# Initialize the metric
+metric = ContextualPrecisionMetric(
+    threshold=0.7,
+    model="gpt-4o",
+    include_reason=True
+)
+
+# Run the evaluation
+metric.measure(test_case)
+print(metric.score)   # e.g. 1.0
+print(metric.reason)  # e.g. "The context was directly relevant and well-ranked."
+```
+
+### How It Works
+
+The metric calculates a **weighted contextual precision score** based on:
+
+- Whether each context node is **relevant** to the input and expected output.
+- The **ranking** of relevant nodes — higher ranks improve the score.
+- Uses an **LLM to determine relevance**, making the evaluation more aligned with human judgment.
