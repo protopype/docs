@@ -36,7 +36,15 @@
                     "evaluations/tool_correctness",
                     "evaluations/conversation_completness",
                     "evaluations/conversation_relevancy",
-                    "evaluations/conversation_geval"
+                    "evaluations/conversation_geval",
+                    {
+                        "group":"RAG Metrics",
+                        "pages":[
+                          "evaluations/rag-metrics/contextual_precision",
+                          "evaluations/rag-metrics/contextual_recall",
+                          "evaluations/rag-metrics/contextual_relevancy"
+                        ]
+                    }
                   ]
               }
             ]
