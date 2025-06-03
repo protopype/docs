@@ -43,10 +43,10 @@
                      "evaluations/multi-model-metrics/image_editing",
                      "evaluations/multi-model-metrics/image_helpfulness", 
                      "evaluations/multi-model-metrics/image_reference",
-                     "evaluations/multi-model-metrics/multimodal_answer_relevancy.py",
+                     "evaluations/multi-model-metrics/multimodal_answer_relevancy",
                      "evaluations/multi-model-metrics/multimodal_contextual_precision",
                      "evaluations/multi-model-metrics/multimodal_contextual_recall",
-                     "evaluations/multi-model-metrics/multimodal_contextual_relevancy",
+                     "evaluations/multi-model-metrics/multimodal_contextual_relevancy.py",
                      "evaluations/multi-model-metrics/multimodal_faithfulness.py",
                      "evaluations/multi-model-metrics/multimodal_tool_correctness",
                      "evaluations/multi-model-metrics/text_to_image"
