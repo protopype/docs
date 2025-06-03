@@ -1,0 +1,59 @@
+---
+title: "Introduction"
+---
+
+Welcome to the Agensight Evaluation , a comprehensive suite designed to enhance the evaluation of LLM (Large Language Model) applications. Our framework supports a wide range of evaluation metrics, including those for Retrieval-Augmented Generation (RAG) and multimodal applications. Agensight leverages the powerful capabilities of the open-source library DeepEval to provide robust and flexible evaluation metrics.
+
+### **Key Features**
+
+- **Comprehensive Metric Support**: Seamlessly integrate over 20\+ research-backed metrics into your evaluation processes, built on the foundation of DeepEval.
+
+
+- **Customizable Evaluations**: Easily tailor metrics to suit your specific evaluation needs, whether for end-to-end or component-level assessments.
+
+
+- **Cloud and Local Evaluations**: Run evaluations locally or leverage cloud platforms to manage and analyze your evaluation results.
+
+
+- **Security and Robustness**: Conduct red teaming and safety scans to ensure your LLM applications are secure and robust against adversarial attacks.
+
+### **Getting Started**
+
+To begin using Agensight Evaluation, ensure you have a Python environment set up. Install the necessary dependencies for Agensight using:
+
+### **Running Your First Evaluation**
+
+Create a test file and define your test cases using the metrics provided by Agensight. Here's a quick example:
+
+```python
+from agensight.eval.metrics import GEvalEvaluator
+from agensight.eval.test_case import ModelTestCase
+
+# Define the metric
+correctness_metric = GEvalEvaluator(
+    name="Code Correctness",
+    criteria="Evaluate whether the generated code correctly implements the specified requirements.",
+    threshold=0.8
+)
+
+# Create a test case
+test_case = ModelTestCase(
+    input="Write a function to add two numbers.",
+    actual_output="def add(a, b): return a + b",
+    expected_output="A function that correctly adds two numbers."
+)
+
+# Run the evaluation
+correctness_metric.measure(test_case)
+print(correctness_metric.score, correctness_metric.reason)
+```
+
+Run your evaluation with:
+
+```bash
+python test_example.py
+```
+
+### **Licensing and Contributions**
+
+Agensight Evaluation is built with open-source principles, and we encourage contributions from the community to enhance its capabilities. If you find Agensight useful, consider giving it a star on GitHub and contributing to its development.

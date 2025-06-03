@@ -32,6 +32,7 @@
                   "group":"LLM Evaluations",
                   "pages":[
                     "evaluations/geval",
+                    "evaluations/intro",
                     "evaluations/task_completion",
                     "evaluations/tool_correctness",
                     "evaluations/conversation_completness",
