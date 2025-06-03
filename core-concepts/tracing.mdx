@@ -20,7 +20,7 @@ _Parameters_:
 
 - name (str): Name of your app/service for trace attribution.
 - mode (str): One of local, dev, or prod. Determines if data is stored locally (SQLite) or sent to cloud.
-- project_id (str): Required for cloud mode to associate records in Supabase.
+- token (str): Required for cloud mode to associate records in Supabase.
 - session (str | dict | None): Optional session ID or metadata. If provided, it associates all traces/spans with this session.
   _Usage Example:_
 
@@ -29,7 +29,7 @@ import agensight
 agensight.init(
     name="chatbot-with-tools",
     mode="prod",
-    project_id="abc12345",
+    token="abc12345",
     session="user_123"  # Can be just a session ID
 )
 ```
@@ -94,7 +94,7 @@ def call_llm(messages):
 ```python
 import agensight
 from agensight.tracing.decorators import trace, span
-agensight.init(name="chat-service", mode="prod", project_id="abc12345", session="user_456")
+agensight.init(name="chat-service", mode="prod", token="abc12345", session="user_456")
 @span(name="llm")
 def call_llm(messages):
     # Simulate an LLM call with tool use
@@ -115,7 +115,7 @@ In prod or dev mode, Agensight automatically sends observability data to your co
 To enable this, ensure:
 
 - You've set mode="prod" or mode="dev" in init()
-- A valid project_id is provided
+- A valid token is provided
 - Your backend infrastructure (e.g. Lambda, database) is correctly configured to receive logs
   Agensight will capture and transmit structured data for:
 - traces: top-level operations
