@@ -21,12 +21,12 @@ The MultimodalContextualRecallMetric is a multimodal metric designed to evaluate
 - async_mode: A boolean which, when set to True, enables concurrent execution within the measure() method. Defaulted to True.
 - verbose_mode: A boolean which, when set to True, prints the intermediate steps used to calculate the metric to the console. Defaulted to False.
 
-### Usage Example 
+### Usage Example
 
 ```python
 import sys
 import os
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..','..','..')))
+
 from agensight.eval.metrics import MultimodalContextualRecallMetric
 from agensight.eval.test_case import MLLMTestCase
 from agensight.eval.test_case import MLLMImage

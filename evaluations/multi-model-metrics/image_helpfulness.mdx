@@ -7,30 +7,16 @@ The ImageHelpfulnessMetric is a multimodal metric designed to evaluate the helpf
 ### **Required Arguments**
 
 - input: A list containing the textual context or description.
-
-
 - actual_output: A list containing the textual description of the image and the image itself. The image is represented as an MLLMImage instance with:
-
-
 - url: The file path or URL to the image.
 
 ### **Optional Arguments**
 
 - threshold: A float representing the minimum passing threshold, defaulted to 0.5.
-
-
 - model: A string specifying which of OpenAI's GPT models to use, or any custom LLM model of type DeepEvalBaseLLM. Defaulted to 'gpt-4o'.
-
-
 - include_reason: A boolean which, when set to True, includes a reason for its evaluation score. Defaulted to True.
-
-
 - strict_mode: A boolean which, when set to True, enforces a binary metric score: 1 for perfection, 0 otherwise. It also overrides the current threshold and sets it to 1. Defaulted to False.
-
-
 - async_mode: A boolean which, when set to True, enables concurrent execution within the measure() method. Defaulted to True.
-
-
 - verbose_mode: A boolean which, when set to True, prints the intermediate steps used to calculate the metric to the console. Defaulted to False.
 
 ### **Usage Example**
@@ -38,7 +24,7 @@ The ImageHelpfulnessMetric is a multimodal metric designed to evaluate the helpf
 ```python
 import sys
 import os
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..','..','..')))
+
 from agensight.eval.metrics import ImageHelpfulnessMetric
 from agensight.eval.test_case import MLLMTestCase
 from agensight.eval.test_case import MLLMImage
