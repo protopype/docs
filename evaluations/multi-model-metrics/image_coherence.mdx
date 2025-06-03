@@ -1,0 +1,55 @@
+---
+title: "Image Coherence"
+---
+
+The ImageCoherenceMetric is a multimodal metric designed to evaluate the coherence between textual descriptions and accompanying images. It assesses how well the image content aligns with the textual context, serving as a proxy for evaluating the performance of models generating or selecting images to match text.
+
+### **Required Arguments**
+
+- input: A list containing the textual context or description.
+
+
+- actual_output: A list containing the textual description of the image and the image itself. The image is represented as an MLLMImage instance with:
+
+
+- url: The file path or URL to the image.
+
+### **Optional Arguments**
+
+- threshold: A float representing the minimum passing threshold, defaulted to 0.5.
+
+
+- model: A string specifying which of OpenAI's GPT models to use, or any custom LLM model of type DeepEvalBaseLLM. Defaulted to 'gpt-4o'.
+
+
+- include_reason: A boolean which, when set to True, includes a reason for its evaluation score. Defaulted to True.
+
+
+- strict_mode: A boolean which, when set to True, enforces a binary metric score: 1 for perfection, 0 otherwise. It also overrides the current threshold and sets it to 1. Defaulted to False.
+
+
+- async_mode: A boolean which, when set to True, enables concurrent execution within the measure() method. Defaulted to True.
+
+
+- verbose_mode: A boolean which, when set to True, prints the intermediate steps used to calculate the metric to the console. Defaulted to False.
+
+### **Usage Example**
+
+```python
+import sys
+import os
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..','..','..')))
+from agensight.eval.metrics import ImageCoherenceMetric
+from agensight.eval.test_case import MLLMTestCase
+from agensight.eval.test_case import MLLMImage
+
+input_data = ["This is a report with an image."]
+actual_output = ["The following image shows a cat on a windowsill.", MLLMImage(url="/Users/deepeshagrawal/pype/examples/evaluations/multi_model/cat.jpeg")]
+
+metric = ImageCoherenceMetric(model="gpt-4o", threshold=0.5)
+test_case = MLLMTestCase(input=input_data, actual_output=actual_output)
+
+metric.measure(test_case)
+print(f"Score: {metric.score}")
+print(f"Reason: {metric.reason}") 
+```

@@ -1,0 +1,45 @@
+---
+title: "Multimodal Contextual Recall"
+description: "Description of your new file."
+---
+
+The MultimodalContextualRecallMetric is a multimodal metric designed to evaluate the recall of contextual information in generated outputs. It assesses how well the generated output recalls relevant information from the context, serving as a proxy for evaluating the performance of models that generate text based on multimodal inputs.
+
+### **Required Arguments**
+
+- input: A list containing the prompt or question related to the image or context.
+- actual_output: A list containing the generated textual description or answer.
+- expected_output: A list containing the expected textual description or answer.
+- retrieval_context: A list containing the contextual information or description of the image.
+
+### **Optional Arguments**
+
+- threshold: A float representing the minimum passing threshold, defaulted to 0.5.
+- model: A string specifying which of OpenAI's GPT models to use, or any custom LLM model of type DeepEvalBaseLLM. Defaulted to 'gpt-4o'.
+- include_reason: A boolean which, when set to True, includes a reason for its evaluation score. Defaulted to True.
+- strict_mode: A boolean which, when set to True, enforces a binary metric score: 1 for perfection, 0 otherwise. It also overrides the current threshold and sets it to 1. Defaulted to False.
+- async_mode: A boolean which, when set to True, enables concurrent execution within the measure() method. Defaulted to True.
+- verbose_mode: A boolean which, when set to True, prints the intermediate steps used to calculate the metric to the console. Defaulted to False.
+
+### Usage Example 
+
+```python
+import sys
+import os
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..','..','..')))
+from agensight.eval.metrics import MultimodalContextualRecallMetric
+from agensight.eval.test_case import MLLMTestCase
+from agensight.eval.test_case import MLLMImage
+
+input_data = ["Describe the image."]
+actual_output = ["A cat is sitting on a windowsill."]
+expected_output = ["A cat is sitting on a windowsill, looking outside."]
+retrieval_context = ["A photo of a cat on a windowsill."]
+
+metric = MultimodalContextualRecallMetric(model="gpt-4o", threshold=0.5)
+test_case = MLLMTestCase(input=input_data, actual_output=actual_output, expected_output=expected_output, retrieval_context=retrieval_context)
+
+metric.measure(test_case)
+print(f"Score: {metric.score}")
+print(f"Reason: {metric.reason}") 
+```
